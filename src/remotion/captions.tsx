@@ -2,7 +2,7 @@
 import React from "react";
 import { Easing, interpolate } from "remotion";
 import type { CaptionSettings } from "./types";
-import { CAPTION_PRESETS } from "./types";
+import { CAPTION_PRESETS, VIRAL_FONTS } from "./types";
 
 export type CapWord = { text: string; startMs: number; endMs: number };
 
@@ -112,8 +112,11 @@ export const CaptionPage: React.FC<Props> = ({ words, t, pageStart, cfg, u }) =>
 
   const visible = style === "pop" ? words.filter((w) => t >= w.startMs).slice(-1) : style === "bounce" ? words.filter((w) => t >= w.startMs) : words;
 
+  const fontObj = cfg.fontFamily ? VIRAL_FONTS.find((f) => f.id === cfg.fontFamily || f.name === cfg.fontFamily) : null;
+  const effectiveFont = fontObj ? fontObj.family : FONT;
+
   const container: React.CSSProperties = {
-    fontFamily: FONT,
+    fontFamily: effectiveFont,
     fontSize: size,
     fontWeight: 800,
     lineHeight: 1.2,

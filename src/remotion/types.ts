@@ -238,6 +238,47 @@ export type Project = {
   mediaBase?: string; // preenchido pelo servidor na exportação
   audio?: BackgroundAudio; // trilha sonora e auto-ducking (Fase 3)
   progressBar?: ProgressBarSettings; // barra de progresso visual de retenção (Fase 4)
+  headline?: HeadlineSettings; // manchete de topo / gancho viral (Fase A)
+};
+
+// ---------- Tipografia Viral ----------
+
+export const VIRAL_FONTS = [
+  { id: "Inter", name: "Inter (Padrão)", family: "Inter, ui-sans-serif, system-ui, sans-serif" },
+  { id: "TheBoldFont", name: "The Bold Font (Viral)", family: "'The Bold Font', 'Impact', sans-serif" },
+  { id: "Montserrat", name: "Montserrat Black", family: "'Montserrat', sans-serif" },
+  { id: "BebasNeue", name: "Bebas Neue (Condensada)", family: "'Bebas Neue', sans-serif" },
+  { id: "Impact", name: "Impact Clássico", family: "Impact, sans-serif" },
+] as const;
+
+export type ViralFontId = typeof VIRAL_FONTS[number]["id"];
+
+// ---------- Manchetes de Topo (Ganchos Virais) ----------
+
+export type HeadlineStyle = "badge" | "bold" | "highlight" | "neon";
+
+export type HeadlineSettings = {
+  enabled: boolean;
+  text: string;
+  durationSeconds: number; // 0 = vídeo todo, 3 = primeiros 3s, 5 = primeiros 5s
+  style: HeadlineStyle;
+  color?: string; // cor de destaque / fundo do badge
+  textColor?: string; // cor do texto
+  fontFamily?: string;
+  fontSize?: number; // escala 0.8..1.5
+  uppercase?: boolean;
+};
+
+export const DEFAULT_HEADLINE: HeadlineSettings = {
+  enabled: false,
+  text: "O SEGREDO QUE NINGUÉM CONTA",
+  durationSeconds: 3,
+  style: "badge",
+  color: "#ffd84d",
+  textColor: "#121319",
+  fontSize: 1.0,
+  uppercase: true,
+  fontFamily: "Inter",
 };
 
 // ---------- Legendas ----------
@@ -271,6 +312,7 @@ export type CaptionSettings = {
   uppercase: boolean;
   wordsPerPage: number; // máximo de palavras por bloco
   autoEmoji?: boolean; // insere emojis contextuais automáticos
+  fontFamily?: string; // fonte viral personalizada
 };
 export const DEFAULT_CAPTIONS: CaptionSettings = {
   enabled: true,

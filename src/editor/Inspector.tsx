@@ -33,6 +33,10 @@ import {
   THEME_PRESETS,
   Theme,
   outputWords,
+  DEFAULT_HEADLINE,
+  HeadlineSettings,
+  HeadlineStyle,
+  VIRAL_FONTS,
 } from "../remotion/types";
 import { BrandKitManager } from "./BrandKitManager";
 
@@ -452,6 +456,21 @@ const CaptionFields: React.FC<{ project: Project; onProject: Props["onProject"] 
                 ))}
               </select>
             </Field>
+            <Field label="Fonte das Legendas">
+              <select
+                className="input"
+                value={c.fontFamily ?? "Inter"}
+                onChange={(e) => set({ fontFamily: e.target.value })}
+              >
+                {VIRAL_FONTS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <div className="field">
             <label className="field">
               <span className="field-label">Tamanho</span>
               <span className="slider">
@@ -765,6 +784,133 @@ const ProgressBarFields: React.FC<{ project: Project; onProject: Props["onProjec
   );
 };
 
+const HeadlineFields: React.FC<{
+  project: Project;
+  onProject: Props["onProject"];
+  flash?: Props["flash"];
+}> = ({ project, onProject }) => {
+  const hl = project.headline ?? DEFAULT_HEADLINE;
+  const set = (patch: Partial<HeadlineSettings>, key?: string) =>
+    onProject({ headline: { ...hl, ...patch } }, key);
+
+  return (
+    <>
+      <label className="toggle">
+        <input
+          type="checkbox"
+          checked={hl.enabled}
+          onChange={(e) => set({ enabled: e.target.checked })}
+        />
+        <span>Ativar manchete de topo (Hook de 3s)</span>
+      </label>
+
+      {hl.enabled ? (
+        <>
+          <Field label="Texto da Manchete / Gancho">
+            <input
+              type="text"
+              className="input"
+              value={hl.text}
+              placeholder="Ex: O SEGREDO QUE NINGUÉM CONTA"
+              onChange={(e) => set({ text: e.target.value }, "hl-text")}
+            />
+          </Field>
+
+          <div className="grid-2">
+            <Field label="Tempo de Exibição">
+              <select
+                className="input"
+                value={hl.durationSeconds}
+                onChange={(e) => set({ durationSeconds: Number(e.target.value) })}
+              >
+                <option value={3}>Primeiros 3 segundos (Recomendado)</option>
+                <option value={5}>Primeiros 5 segundos</option>
+                <option value={8}>Primeiros 8 segundos</option>
+                <option value={0}>Vídeo todo (Fixo)</option>
+              </select>
+            </Field>
+
+            <Field label="Estilo Visual">
+              <select
+                className="input"
+                value={hl.style}
+                onChange={(e) => set({ style: e.target.value as HeadlineStyle })}
+              >
+                <option value="badge">Badge Sólido (Hormozi)</option>
+                <option value="bold">Texto de Impacto (Bold)</option>
+                <option value="highlight">Marca-Texto (Pill)</option>
+                <option value="neon">Neon Glow (Aura)</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid-2">
+            <Field label="Fonte do Gancho">
+              <select
+                className="input"
+                value={hl.fontFamily ?? "Inter"}
+                onChange={(e) => set({ fontFamily: e.target.value })}
+              >
+                {VIRAL_FONTS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <label className="field">
+              <span className="field-label">Tamanho da Fonte</span>
+              <span className="slider">
+                <input
+                  type="range"
+                  min={0.7}
+                  max={1.5}
+                  step={0.05}
+                  value={hl.fontSize ?? 1.0}
+                  onChange={(e) => set({ fontSize: Number(e.target.value) }, "hl-size")}
+                />
+                <span className="slider-val">{Math.round((hl.fontSize ?? 1.0) * 100)}%</span>
+              </span>
+            </label>
+          </div>
+
+          <div className="grid-2">
+            <label className="color-field">
+              <input
+                type="color"
+                value={hl.color || project.theme.accent}
+                onChange={(e) => set({ color: e.target.value }, "hl-color")}
+              />
+              <span>Destaque</span>
+              <code>{hl.color || project.theme.accent}</code>
+            </label>
+
+            <label className="color-field">
+              <input
+                type="color"
+                value={hl.textColor || "#121319"}
+                onChange={(e) => set({ textColor: e.target.value }, "hl-textcolor")}
+              />
+              <span>Texto</span>
+              <code>{hl.textColor || "#121319"}</code>
+            </label>
+          </div>
+
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={hl.uppercase !== false}
+              onChange={(e) => set({ uppercase: e.target.checked })}
+            />
+            <span>Caixa alta</span>
+          </label>
+        </>
+      ) : null}
+    </>
+  );
+};
+
 const ProjectFields: React.FC<{
   project: Project;
   onProject: Props["onProject"];
@@ -833,6 +979,9 @@ const ProjectFields: React.FC<{
         );
       })}
     </div>
+
+    <div className="group-title">Manchete de Topo (Gancho Viral)</div>
+    <HeadlineFields project={project} onProject={onProject} flash={flash} />
 
     <div className="group-title">Barra de Progresso (Retenção)</div>
     <ProgressBarFields project={project} onProject={onProject} flash={flash} />
