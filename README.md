@@ -93,6 +93,10 @@ npm install
 
 ### Running the Editor
 
+#### Option A: Windows 1-Click Launcher
+Double-click `iniciar.bat` in the project root. It will verify Node.js, install dependencies if needed, and start the application.
+
+#### Option B: Terminal (Cross-platform)
 To run both the frontend editor and the local rendering server concurrently:
 
 ```bash
@@ -103,10 +107,19 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Scripts
 
-- `npm run dev`: Starts Vite dev server (port 5173) and local Express backend (port 3001).
+- `npm run dev`: Starts Vite dev server (port 5173) and local Express backend (port 3123).
 - `npm run build`: Bundles the client application for production.
 - `npm run typecheck`: Validates TypeScript types across the entire project.
+- `npm run security:check`: Runs automated 007 credential and secret leak audit.
 - `npm run studio`: Launches the Remotion Studio preview.
+
+---
+
+## 📚 Documentation & Guides
+
+- 🇧🇷 **[Guia Completo de Uso (Passo a Passo em Português)](GUIA_DE_USO.md):** Manual completo de operação com tutoriais, atalhos de teclado e dicas de viralização.
+- 🤝 **[Contributing Guidelines](CONTRIBUTING.md):** Rules, code conventions, and zero-emoji policy for contributors.
+- 🗺️ **[Plano de Evolução do Projeto](PLANO_EVOLUCAO_OPENSOURCE.md):** Roadmap de funcionalidades e arquitetura técnica.
 
 ---
 
