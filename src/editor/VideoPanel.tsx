@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { Info } from "lucide-react";
+import { Info, Rows2 } from "lucide-react";
 import {
   CAPTION_PRESETS,
   DEFAULT_CAPTIONS,
+  DEFAULT_SPLIT_SCREEN,
   FPS,
   Project,
   Scene,
@@ -308,6 +309,260 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>Aproxima a câmera automaticamente nos cortes ímpares ({scene.segments.length} segmentos) para prender a atenção do espectador estilo MrBeast/Alex Hormozi.</span>
           </div>
+        ) : null}
+      </div>
+
+      {/* Tela Dividida / Split Screen 50/50 (Fase B) */}
+      <div className="reframe-box" style={{ marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span className="field-label" style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Rows2 size={15} />
+            <span>Tela Dividida (Split Screen 50/50)</span>
+          </span>
+          {scene.splitScreen?.enabled ? (
+            <button
+              className="btn tiny ghost"
+              style={{ padding: "2px 6px", fontSize: 11 }}
+              onClick={() =>
+                onScene({
+                  splitScreen: {
+                    ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                    enabled: false,
+                  },
+                } as Partial<Scene>)
+              }
+            >
+              Desativar
+            </button>
+          ) : null}
+        </div>
+
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={!!scene.splitScreen?.enabled}
+            onChange={(e) =>
+              onScene({
+                splitScreen: {
+                  ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                  enabled: e.target.checked,
+                },
+              } as Partial<Scene>)
+            }
+          />
+          <span>Ativar Tela Dividida (Vídeo Duplo / Gameplay / Reação)</span>
+        </label>
+
+        {scene.splitScreen?.enabled ? (
+          <>
+            <div className="grid-2" style={{ marginTop: 8 }}>
+              <label className="field">
+                <span className="field-label">Proporção da Divisão</span>
+                <select
+                  className="input"
+                  value={scene.splitScreen.splitRatio ?? 0.5}
+                  onChange={(e) =>
+                    onScene({
+                      splitScreen: {
+                        ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                        splitRatio: Number(e.target.value),
+                      },
+                    } as Partial<Scene>)
+                  }
+                >
+                  <option value={0.5}>50% / 50% (Metade e Metade)</option>
+                  <option value={0.65}>65% / 35% (Mais Apresentador)</option>
+                  <option value={0.35}>35% / 65% (Mais Conteúdo)</option>
+                </select>
+              </label>
+
+              <label className="field">
+                <span className="field-label">Posição do Apresentador</span>
+                <select
+                  className="input"
+                  value={scene.splitScreen.reverse ? "bottom" : "top"}
+                  onChange={(e) =>
+                    onScene({
+                      splitScreen: {
+                        ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                        reverse: e.target.value === "bottom",
+                      },
+                    } as Partial<Scene>)
+                  }
+                >
+                  <option value="top">Apresentador no Topo</option>
+                  <option value="bottom">Apresentador na Base</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="field" style={{ marginTop: 6 }}>
+              <span className="field-label">Vídeo Secundário (Metade Oposta)</span>
+              <select
+                className="input"
+                value={scene.splitScreen.assetId ?? ""}
+                onChange={(e) =>
+                  onScene({
+                    splitScreen: {
+                      ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                      assetId: e.target.value || undefined,
+                    },
+                  } as Partial<Scene>)
+                }
+              >
+                <option value="">Mesmo Vídeo (Corte Duplo / Zoom Separado)</option>
+                {(project.assets ?? [])
+                  .filter((a) => a.kind === "video" || !a.kind)
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} (B-Roll)
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <div className="grid-2" style={{ marginTop: 6 }}>
+              <label className="field">
+                <span className="field-label">Posição Vertical (Pan Y)</span>
+                <span className="slider">
+                  <input
+                    type="range"
+                    min={-50}
+                    max={50}
+                    step={1}
+                    value={scene.splitScreen.secondaryPanY ?? 0}
+                    onChange={(e) =>
+                      onScene(
+                        {
+                          splitScreen: {
+                            ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                            secondaryPanY: Number(e.target.value),
+                          },
+                        } as Partial<Scene>,
+                        "split-panY"
+                      )
+                    }
+                  />
+                  <span className="slider-val">{scene.splitScreen.secondaryPanY ?? 0}%</span>
+                </span>
+              </label>
+
+              <label className="field">
+                <span className="field-label">Posição Horizontal (Pan X)</span>
+                <span className="slider">
+                  <input
+                    type="range"
+                    min={-50}
+                    max={50}
+                    step={1}
+                    value={scene.splitScreen.secondaryPanX ?? 0}
+                    onChange={(e) =>
+                      onScene(
+                        {
+                          splitScreen: {
+                            ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                            secondaryPanX: Number(e.target.value),
+                          },
+                        } as Partial<Scene>,
+                        "split-panX"
+                      )
+                    }
+                  />
+                  <span className="slider-val">{scene.splitScreen.secondaryPanX ?? 0}%</span>
+                </span>
+              </label>
+            </div>
+
+            <div className="grid-2" style={{ marginTop: 6 }}>
+              <label className="field">
+                <span className="field-label">Zoom do Vídeo Secundário</span>
+                <span className="slider">
+                  <input
+                    type="range"
+                    min={0.8}
+                    max={2.0}
+                    step={0.05}
+                    value={scene.splitScreen.secondaryScale ?? 1.0}
+                    onChange={(e) =>
+                      onScene(
+                        {
+                          splitScreen: {
+                            ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                            secondaryScale: Number(e.target.value),
+                          },
+                        } as Partial<Scene>,
+                        "split-scale"
+                      )
+                    }
+                  />
+                  <span className="slider-val">{Math.round((scene.splitScreen.secondaryScale ?? 1.0) * 100)}%</span>
+                </span>
+              </label>
+
+              <label className="field">
+                <span className="field-label">Volume do Secundário</span>
+                <span className="slider">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={scene.splitScreen.secondaryVolume ?? 0}
+                    onChange={(e) =>
+                      onScene(
+                        {
+                          splitScreen: {
+                            ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                            secondaryVolume: Number(e.target.value),
+                          },
+                        } as Partial<Scene>,
+                        "split-vol"
+                      )
+                    }
+                  />
+                  <span className="slider-val">
+                    {(scene.splitScreen.secondaryVolume ?? 0) === 0 ? "Mudo" : `${Math.round((scene.splitScreen.secondaryVolume ?? 0) * 100)}%`}
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={scene.splitScreen.divider !== false}
+                  onChange={(e) =>
+                    onScene({
+                      splitScreen: {
+                        ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                        divider: e.target.checked,
+                      },
+                    } as Partial<Scene>)
+                  }
+                />
+                <span>Exibir linha divisória</span>
+              </label>
+
+              {scene.splitScreen.divider !== false ? (
+                <label className="color-field" style={{ margin: 0, padding: "2px 8px" }}>
+                  <input
+                    type="color"
+                    value={scene.splitScreen.dividerColor || project.theme.accent}
+                    onChange={(e) =>
+                      onScene({
+                        splitScreen: {
+                          ...(scene.splitScreen ?? DEFAULT_SPLIT_SCREEN),
+                          dividerColor: e.target.value,
+                        },
+                      } as Partial<Scene>)
+                    }
+                  />
+                  <span className="field-label" style={{ fontSize: 11 }}>Cor da Divisória</span>
+                </label>
+              ) : null}
+            </div>
+          </>
         ) : null}
       </div>
 

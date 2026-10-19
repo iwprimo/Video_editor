@@ -1,13 +1,13 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Film } from "lucide-react";
 import { IconSvg } from "../remotion/overlays";
-import { ImageAsset, OVERLAYS, OverlayKind } from "../remotion/types";
+import { ImageAsset, OVERLAYS, OverlayKind, STICKER_PRESETS } from "../remotion/types";
 import { searchIcons } from "./iconSearch";
 
 export const OVERLAY_MIME = "application/x-editor-overlay";
 export type OverlayPayload = { kind: OverlayKind; props?: Record<string, unknown> };
 
-type Tab = "motion" | "icons" | "images" | "broll" | "ai";
+type Tab = "motion" | "stickers" | "icons" | "images" | "broll" | "ai";
 
 const MOTION: OverlayKind[] = ["lowerThird", "callout", "keyword", "counter", "barChart", "progress", "checklist", "cta"];
 
@@ -76,6 +76,39 @@ const MotionThumb: React.FC<{ kind: OverlayKind }> = ({ kind }) => (
   </span>
 );
 
+const StickerThumb: React.FC<{ type: string; color: string }> = ({ type, color }) => {
+  const iconMap: Record<string, string> = {
+    "arrow-down": "arrow-down",
+    "arrow-right": "arrow-right",
+    "arrow-curve": "corner-right-down",
+    "circle-pulse": "circle-dot",
+    "alert-warning": "alert-triangle",
+    subscribe: "bell",
+    verified: "check",
+    "fire-trend": "flame",
+    "tap-gesture": "pointer",
+  };
+  const icon = iconMap[type] ?? "sparkles";
+  return (
+    <span
+      className="thumb"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 48,
+        height: 48,
+        borderRadius: 8,
+        background: "rgba(255, 255, 255, 0.05)",
+        color,
+      }}
+      aria-hidden
+    >
+      <IconSvg name={icon} size={24} strokeWidth={2.4} />
+    </span>
+  );
+};
+
 export const IllustrationsLibrary: React.FC<Props> = (p) => {
   const [tab, setTab] = useState<Tab>("motion");
   const [query, setQuery] = useState("");
@@ -98,6 +131,7 @@ export const IllustrationsLibrary: React.FC<Props> = (p) => {
           {(
             [
               ["motion", "Motion"],
+              ["stickers", "Stickers"],
               ["icons", "Ícones"],
               ["images", "Imagens"],
               ["broll", "B-Roll (Vídeos)"],
@@ -121,6 +155,46 @@ export const IllustrationsLibrary: React.FC<Props> = (p) => {
                   <MotionThumb kind={k} />
                   <span className="fx-name">{OVERLAYS[k].name}</span>
                   <span className="fx-desc">{OVERLAYS[k].description}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {tab === "stickers" ? (
+          <div className="fx-grid">
+            {STICKER_PRESETS.map((st) => (
+              <div
+                key={st.id}
+                className="fx-card"
+                draggable
+                onDragStart={drag({
+                  kind: "sticker",
+                  props: {
+                    stickerType: st.id,
+                    color: st.defaultColor,
+                    text: st.defaultText,
+                  },
+                })}
+                title={st.description}
+              >
+                <button
+                  className="fx-main"
+                  onClick={() =>
+                    p.onAdd({
+                      kind: "sticker",
+                      props: {
+                        stickerType: st.id,
+                        color: st.defaultColor,
+                        text: st.defaultText,
+                      },
+                    })
+                  }
+                  aria-label={`Inserir ${st.name}`}
+                >
+                  <StickerThumb type={st.id} color={st.defaultColor} />
+                  <span className="fx-name">{st.name}</span>
+                  <span className="fx-desc">{st.description}</span>
                 </button>
               </div>
             ))}

@@ -24,11 +24,18 @@ import { CaptionsLayer, OverlaysLayer } from "./overlays";
 import { HeadlineLayer } from "./HeadlineLayer";
 import { AudioLayer } from "./AudioLayer";
 import { FPS, normalizeProject, segFrames, transitionFrames, totalFrames } from "./types";
-import type { ChartScene, OutroScene, Project, Scene, StatsScene, TextScene, Theme, TitleScene, VideoScene } from "./types";
+import type { ChartScene, ImageAsset, OutroScene, Project, Scene, StatsScene, TextScene, Theme, TitleScene, VideoScene } from "./types";
 
 const FONT = "Inter, ui-sans-serif, system-ui, sans-serif";
 const easeOut = Easing.bezier(0.22, 1, 0.36, 1);
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+
+const alpha = (hex: string, a: number) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+};
 
 // Escala tudo a partir do menor lado do quadro (1080 = 1x)
 const useUnit = () => {
@@ -336,7 +343,12 @@ const OutroView: React.FC<{ s: OutroScene; t: Theme }> = ({ s, t }) => {
 };
 
 // Gravação importada: cada trecho mantido toca do arquivo original, com fade curto no áudio para o corte não estalar
-const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme }> = ({ s, mediaBase, theme }) => {
+const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; assets?: ImageAsset[] }> = ({
+  s,
+  mediaBase,
+  theme,
+  assets,
+}) => {
   const src = `${mediaBase}/media/${s.file}`;
   const [failed, setFailed] = useState(false);
   // Na prévia, um erro de reprodução não derruba o editor; na exportação ele deve aparecer
@@ -353,14 +365,30 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme }> =
   const punchPattern = s.punchInPattern ?? "none";
   const punchZoom = s.punchInZoom ?? 1.2;
 
+  // --- Split Screen 50/50 (Fase B) ---
+  const isSplit = !!s.splitScreen?.enabled;
+  const splitRatio = s.splitScreen?.splitRatio ?? 0.5;
+  const isReverse = !!s.splitScreen?.reverse;
+  const primaryRatio = isReverse ? 1 - splitRatio : splitRatio;
+  const secondaryRatio = 1 - primaryRatio;
+
+  const secondaryAsset = s.splitScreen?.assetId ? assets?.find((a) => a.id === s.splitScreen?.assetId) : undefined;
+  const secondarySrc = secondaryAsset
+    ? `${mediaBase}/media/${secondaryAsset.file}`
+    : s.splitScreen?.file
+      ? `${mediaBase}/media/${s.splitScreen.file}`
+      : src;
+  const secondaryPanX = s.splitScreen?.secondaryPanX ?? 0;
+  const secondaryPanY = s.splitScreen?.secondaryPanY ?? 0;
+  const secondaryScale = s.splitScreen?.secondaryScale ?? 1.0;
+  const secondaryVolume = s.splitScreen?.secondaryVolume ?? 0;
+  const showDivider = s.splitScreen?.divider !== false;
+  const dividerColor = s.splitScreen?.dividerColor || (theme?.accent ?? "#ffd84d");
+  const dividerWidth = s.splitScreen?.dividerWidth ?? 3;
+
   let from = 0;
-  return (
-    <AbsoluteFill style={{ overflow: "hidden", background: s.bgMode === "black" ? "#000" : (theme?.bg ?? "#000") }}>
-      {failed ? (
-        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", background: "#14161f", color: "#c9cddb", fontFamily: FONT, fontSize: 28, textAlign: "center", padding: 60 }}>
-          Este navegador não conseguiu tocar o vídeo na prévia. Use Chrome ou Edge atualizados; a exportação não é afetada.
-        </AbsoluteFill>
-      ) : null}
+  const primaryContent = (
+    <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
       {s.segments.map((seg, i) => {
         const len = segFrames(seg);
         const startAt = from;
@@ -425,17 +453,104 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme }> =
           </Sequence>
         );
       })}
+    </div>
+  );
+
+  const secondaryContent = (
+    <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#0c0d14" }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transform: `translate(${secondaryPanX}%, ${secondaryPanY}%) scale(${secondaryScale})`,
+          transformOrigin: "center center",
+        }}
+      >
+        <OffthreadVideo
+          src={secondarySrc}
+          volume={secondaryVolume}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+          pauseWhenBuffering
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <AbsoluteFill style={{ overflow: "hidden", background: s.bgMode === "black" ? "#000" : (theme?.bg ?? "#000") }}>
+      {failed ? (
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", background: "#14161f", color: "#c9cddb", fontFamily: FONT, fontSize: 28, textAlign: "center", padding: 60 }}>
+          Este navegador não conseguiu tocar o vídeo na prévia. Use Chrome ou Edge atualizados; a exportação não é afetada.
+        </AbsoluteFill>
+      ) : null}
+
+      {isSplit ? (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: isReverse ? `${(1 - primaryRatio) * 100}%` : 0,
+              height: `${primaryRatio * 100}%`,
+              overflow: "hidden",
+              zIndex: 1,
+            }}
+          >
+            {primaryContent}
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: isReverse ? 0 : `${primaryRatio * 100}%`,
+              height: `${secondaryRatio * 100}%`,
+              overflow: "hidden",
+              zIndex: 1,
+            }}
+          >
+            {secondaryContent}
+          </div>
+
+          {showDivider ? (
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: `${(isReverse ? 1 - primaryRatio : primaryRatio) * 100}%`,
+                height: dividerWidth,
+                background: dividerColor,
+                transform: "translateY(-50%)",
+                zIndex: 10,
+                boxShadow: `0 0 14px ${alpha(dividerColor, 0.6)}`,
+              }}
+            />
+          ) : null}
+        </>
+      ) : (
+        primaryContent
+      )}
     </AbsoluteFill>
   );
 };
 
 const MediaBase = createContext("");
 
-const SceneView: React.FC<{ scene: Scene; theme: Theme }> = ({ scene, theme }) => {
+const SceneView: React.FC<{ scene: Scene; theme: Theme; assets?: ImageAsset[] }> = ({ scene, theme, assets }) => {
   const mediaBase = useContext(MediaBase);
   switch (scene.type) {
     case "video":
-      return <VideoView s={scene} mediaBase={mediaBase} theme={theme} />;
+      return <VideoView s={scene} mediaBase={mediaBase} theme={theme} assets={assets} />;
     case "title":
       return <TitleView s={scene} t={theme} />;
     case "chart":
@@ -522,7 +637,7 @@ export const Video: React.FC<Project> = (raw) => {
                     duration={scene.duration}
                     background={<SceneBackground theme={theme} />}
                   >
-                    <SceneView scene={scene} theme={theme} />
+                    <SceneView scene={scene} theme={theme} assets={project.assets} />
                   </EffectsLayer>
                 </ExitContext.Provider>
               </TransitionSeries.Sequence>,

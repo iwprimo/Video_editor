@@ -181,6 +181,36 @@ export type VideoScene = SceneBase & {
   // --- Punch-in Zooms (Fase 4) ---
   punchInPattern?: "none" | "alternate" | "manual"; // alternar nos cortes, sem zoom ou manual
   punchInZoom?: number; // 1.1..1.4 (padrão 1.2)
+  // --- Tela Dividida / Split Screen 50/50 (Fase B) ---
+  splitScreen?: SplitScreenConfig;
+};
+
+export type SplitScreenConfig = {
+  enabled: boolean;
+  splitRatio: number; // 0.3..0.7 (padrão 0.5 = 50/50)
+  reverse?: boolean; // false = primário no topo, secundário na base; true = primário na base
+  assetId?: string; // id de vídeo enviado na biblioteca de assets
+  file?: string; // arquivo direto de vídeo se disponível
+  secondaryPanX?: number; // -50..50 (%)
+  secondaryPanY?: number; // -50..50 (%)
+  secondaryScale?: number; // 0.8..2.5 (padrão 1.0)
+  secondaryVolume?: number; // 0..1 (padrão 0)
+  divider?: boolean; // barra de separação (padrão true)
+  dividerColor?: string; // cor da barra (padrão #ffd84d ou cor do tema)
+  dividerWidth?: number; // largura em px (padrão 3)
+};
+
+export const DEFAULT_SPLIT_SCREEN: SplitScreenConfig = {
+  enabled: false,
+  splitRatio: 0.5,
+  reverse: false,
+  secondaryPanX: 0,
+  secondaryPanY: 0,
+  secondaryScale: 1.0,
+  secondaryVolume: 0,
+  divider: true,
+  dividerColor: "#ffd84d",
+  dividerWidth: 3,
 };
 
 export type Scene = TitleScene | ChartScene | StatsScene | TextScene | OutroScene | VideoScene;
@@ -382,6 +412,7 @@ export type ImageAsset = {
 export type OverlayKind =
   | "image"
   | "video"
+  | "sticker"
   | "icon"
   | "lowerThird"
   | "callout"
@@ -391,6 +422,109 @@ export type OverlayKind =
   | "progress"
   | "checklist"
   | "cta";
+
+export type StickerType =
+  | "arrow-down"
+  | "arrow-right"
+  | "arrow-curve"
+  | "circle-pulse"
+  | "alert-warning"
+  | "subscribe"
+  | "verified"
+  | "fire-trend"
+  | "tap-gesture";
+
+export const STICKER_PRESETS: {
+  id: StickerType;
+  name: string;
+  description: string;
+  defaultText: string;
+  defaultColor: string;
+  defaultPosition: OverlayPosition;
+  defaultSfx: "pop" | "whoosh" | "ding" | "click";
+}[] = [
+  {
+    id: "arrow-down",
+    name: "Seta para Baixo",
+    description: "Seta neon pulsante apontando para baixo",
+    defaultText: "",
+    defaultColor: "#ffd84d",
+    defaultPosition: "bottom",
+    defaultSfx: "pop",
+  },
+  {
+    id: "arrow-right",
+    name: "Seta para Direita",
+    description: "Seta indicativa apontando para o lado",
+    defaultText: "",
+    defaultColor: "#ffd84d",
+    defaultPosition: "right",
+    defaultSfx: "whoosh",
+  },
+  {
+    id: "arrow-curve",
+    name: "Seta Curva Viral",
+    description: "Seta curva desenhada em arco dinâmico",
+    defaultText: "",
+    defaultColor: "#ffd84d",
+    defaultPosition: "center",
+    defaultSfx: "whoosh",
+  },
+  {
+    id: "circle-pulse",
+    name: "Círculo de Foco",
+    description: "Anel pulsante que foca a atenção no detalhe",
+    defaultText: "",
+    defaultColor: "#ff4444",
+    defaultPosition: "center",
+    defaultSfx: "ding",
+  },
+  {
+    id: "alert-warning",
+    name: "Aviso de Alerta",
+    description: "Badge chamativo de cuidado ou ponto crítico",
+    defaultText: "ATENÇÃO",
+    defaultColor: "#ffd84d",
+    defaultPosition: "top",
+    defaultSfx: "ding",
+  },
+  {
+    id: "subscribe",
+    name: "Seguir / Inscrever-se",
+    description: "Badge animado com sino de notificação",
+    defaultText: "SEGUIR",
+    defaultColor: "#ef4444",
+    defaultPosition: "bottom",
+    defaultSfx: "pop",
+  },
+  {
+    id: "verified",
+    name: "Selo Verificado",
+    description: "Selo de autenticidade e autoridade",
+    defaultText: "OFICIAL",
+    defaultColor: "#38bdf8",
+    defaultPosition: "top-right",
+    defaultSfx: "ding",
+  },
+  {
+    id: "fire-trend",
+    name: "Em Alta / Viral",
+    description: "Ícone de chama com efeito de energia e calor",
+    defaultText: "VIRAL",
+    defaultColor: "#f97316",
+    defaultPosition: "top-left",
+    defaultSfx: "whoosh",
+  },
+  {
+    id: "tap-gesture",
+    name: "Clique Aqui",
+    description: "Indicador de toque com onda de clique",
+    defaultText: "TOQUE",
+    defaultColor: "#ffffff",
+    defaultPosition: "center",
+    defaultSfx: "click",
+  },
+];
 
 export type OverlayPosition =
   | "full"
@@ -435,6 +569,19 @@ export const OVERLAYS: Record<
 > = {
   image: { name: "Imagem", description: "Foto, logo ou print", position: "right", size: 0.55, duration: 4, props: { assetId: "", animation: "pop", rounded: true } },
   video: { name: "B-Roll (Vídeo)", description: "Clipe ou corte de apoio secundário", position: "full", size: 1, duration: 3.5, props: { assetId: "", fit: "cover", rounded: false, volume: 0 } },
+  sticker: {
+    name: "Sticker Animado",
+    description: "Seta, círculo de atenção ou badge viral",
+    position: "center",
+    size: 0.35,
+    duration: 3,
+    props: {
+      stickerType: "arrow-down",
+      color: "#ffd84d",
+      text: "OLHE AQUI",
+      animation: "bounce",
+    },
+  },
   icon: { name: "Ícone", description: "Ícone com legenda opcional", position: "top-right", size: 0.3, duration: 3, props: { name: "lightbulb", label: "", color: "" } },
   lowerThird: { name: "Nome e cargo", description: "Faixa de identificação na base", position: "bottom-left", size: 0.6, duration: 5, props: { title: "Nome Sobrenome", subtitle: "Cargo · Área" } },
   callout: { name: "Destaque", description: "Etiqueta com uma informação curta", position: "top-left", size: 0.5, duration: 3.5, props: { text: "Ponto importante" } },

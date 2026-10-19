@@ -8,6 +8,7 @@ import {
   OverlayPosition,
   POSITIONS,
   Project,
+  STICKER_PRESETS,
   localToSource,
   sourceToLocal,
 } from "../remotion/types";
@@ -273,6 +274,63 @@ export const OverlayInspector: React.FC<Props> = ({ overlay: ov, project, onChan
               <span>Cantos arredondados</span>
             </label>
           ) : null}
+        </>
+      ) : null}
+
+      {ov.kind === "sticker" ? (
+        <>
+          <div className="group-title">Sticker Animado</div>
+          <Field label="Modelo do Sticker">
+            <select
+              className="input"
+              value={String(p.stickerType ?? "arrow-down")}
+              onChange={(e) => {
+                const found = STICKER_PRESETS.find((s) => s.id === e.target.value);
+                prop("stickerType", e.target.value);
+                if (found && !p.text) prop("text", found.defaultText);
+                if (found && !p.color) prop("color", found.defaultColor);
+              }}
+            >
+              {STICKER_PRESETS.map((st) => (
+                <option key={st.id} value={st.id}>
+                  {st.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Texto / Rótulo (Opcional)">
+            <input
+              type="text"
+              className="input"
+              value={String(p.text ?? "")}
+              placeholder="Ex: OLHE AQUI, ATENÇÃO, SEGUIR"
+              onChange={(e) => prop("text", e.target.value)}
+            />
+          </Field>
+
+          <div className="grid-2">
+            <label className="color-field">
+              <input
+                type="color"
+                value={String(p.color ?? project.theme.accent)}
+                onChange={(e) => prop("color", e.target.value)}
+              />
+              <span className="field-label">Cor Principal</span>
+              <code>{String(p.color ?? project.theme.accent)}</code>
+            </label>
+
+            <Field label="Animação Contínua">
+              <select
+                className="input"
+                value={String(p.animation ?? "bounce")}
+                onChange={(e) => prop("animation", e.target.value)}
+              >
+                <option value="bounce">Pulsar & Pular (Atenção)</option>
+                <option value="pop">Entrada Pop Fixa</option>
+              </select>
+            </Field>
+          </div>
         </>
       ) : null}
 

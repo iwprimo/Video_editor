@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { AbsoluteFill, Easing, Img, OffthreadVideo, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import iconNodes from "lucide-static/icon-nodes.json";
-import type { ImageAsset, Overlay, OverlayPosition, Project, Theme } from "./types";
+import type { ImageAsset, Overlay, OverlayPosition, Project, Theme, StickerType } from "./types";
 import { DEFAULT_CAPTIONS, FPS, outputWords, overlayWindow } from "./types";
 import { CaptionPage } from "./captions";
 
@@ -390,9 +390,148 @@ const CtaView: React.FC<ViewProps> = ({ ov, theme, w }) => {
   );
 };
 
+const StickerView: React.FC<ViewProps> = ({ ov, theme, w }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const stickerType = str(ov.props.stickerType, "arrow-down") as StickerType;
+  const color = str(ov.props.color) || theme.accent;
+  const text = str(ov.props.text);
+  const sp = spring({ frame, fps, config: { damping: 12, stiffness: 150 } });
+
+  // Animações procedurais contínuas para retenção máxima
+  const bounceY = Math.sin((frame * 8 * Math.PI) / 180) * (w * 0.08);
+  const bounceX = Math.cos((frame * 8 * Math.PI) / 180) * (w * 0.08);
+  const pulseScale = 1 + Math.sin((frame * 10 * Math.PI) / 180) * 0.08;
+  const rippleScale = 1 + ((frame % 30) / 30) * 0.5;
+  const rippleOpacity = Math.max(0, 1 - (frame % 30) / 30);
+  const bellTilt = Math.sin((frame * 12 * Math.PI) / 180) * 14;
+
+  const glowStyle: React.CSSProperties = {
+    filter: `drop-shadow(0 ${w * 0.02}px ${w * 0.06}px ${alpha(color, 0.65)})`,
+  };
+
+  switch (stickerType) {
+    case "arrow-down":
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", transform: `translateY(${bounceY}px) scale(${sp})`, ...glowStyle }}>
+          {text ? (
+            <div style={{ background: color, color: isLight(color) ? "#121319" : "#fff", fontWeight: 800, fontSize: w * 0.16, padding: `${w * 0.04}px ${w * 0.1}px`, borderRadius: w * 0.05, marginBottom: w * 0.04, textTransform: "uppercase", letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
+              {text}
+            </div>
+          ) : null}
+          <div style={{ width: w * 0.6, height: w * 0.6, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", color: isLight(color) ? "#121319" : "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+            <IconSvg name="arrow-down" size={w * 0.38} strokeWidth={3} />
+          </div>
+        </div>
+      );
+
+    case "arrow-right":
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: w * 0.06, transform: `translateX(${bounceX}px) scale(${sp})`, ...glowStyle }}>
+          {text ? (
+            <div style={{ background: color, color: isLight(color) ? "#121319" : "#fff", fontWeight: 800, fontSize: w * 0.16, padding: `${w * 0.04}px ${w * 0.1}px`, borderRadius: w * 0.05, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {text}
+            </div>
+          ) : null}
+          <div style={{ width: w * 0.6, height: w * 0.6, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", color: isLight(color) ? "#121319" : "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+            <IconSvg name="arrow-right" size={w * 0.38} strokeWidth={3} />
+          </div>
+        </div>
+      );
+
+    case "arrow-curve":
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", transform: `scale(${sp * pulseScale})`, ...glowStyle }}>
+          {text ? (
+            <div style={{ background: color, color: isLight(color) ? "#121319" : "#fff", fontWeight: 800, fontSize: w * 0.15, padding: `${w * 0.04}px ${w * 0.1}px`, borderRadius: w * 0.05, marginBottom: w * 0.04, textTransform: "uppercase" }}>
+              {text}
+            </div>
+          ) : null}
+          <div style={{ width: w * 0.65, height: w * 0.65, display: "flex", alignItems: "center", justifyContent: "center", color }}>
+            <IconSvg name="corner-right-down" size={w * 0.55} strokeWidth={3.5} />
+          </div>
+        </div>
+      );
+
+    case "circle-pulse":
+      return (
+        <div style={{ position: "relative", width: w, height: w, display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${sp})` }}>
+          <div style={{ position: "absolute", width: w * 0.8, height: w * 0.8, borderRadius: "50%", border: `${w * 0.03}px solid ${color}`, transform: `scale(${rippleScale})`, opacity: rippleOpacity, pointerEvents: "none" }} />
+          <div style={{ width: w * 0.75, height: w * 0.75, borderRadius: "50%", border: `${w * 0.05}px solid ${color}`, background: alpha(color, 0.15), display: "flex", alignItems: "center", justifyContent: "center", ...glowStyle }}>
+            {text ? (
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: w * 0.14, textTransform: "uppercase", textAlign: "center", textShadow: "0 2px 8px #000" }}>{text}</span>
+            ) : null}
+          </div>
+        </div>
+      );
+
+    case "alert-warning":
+      return (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: w * 0.08, background: "#1a1608", border: `${w * 0.025}px solid ${color}`, borderRadius: w * 0.08, padding: `${w * 0.06}px ${w * 0.1}px`, transform: `scale(${sp * pulseScale})`, ...glowStyle, boxShadow: `0 ${w * 0.04}px ${w * 0.12}px rgba(0,0,0,0.6)` }}>
+          <div style={{ color }}>
+            <IconSvg name="alert-triangle" size={w * 0.3} strokeWidth={2.5} />
+          </div>
+          <span style={{ color: "#ffffff", fontWeight: 800, fontSize: w * 0.18, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+            {text || "ATENÇÃO"}
+          </span>
+        </div>
+      );
+
+    case "subscribe":
+      return (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: w * 0.08, background: color, borderRadius: w * 0.08, padding: `${w * 0.06}px ${w * 0.12}px`, transform: `scale(${sp})`, boxShadow: `0 ${w * 0.04}px ${w * 0.14}px ${alpha(color, 0.5)}` }}>
+          <div style={{ transform: `rotate(${bellTilt}deg)`, color: isLight(color) ? "#121319" : "#fff" }}>
+            <IconSvg name="bell" size={w * 0.28} strokeWidth={2.5} />
+          </div>
+          <span style={{ color: isLight(color) ? "#121319" : "#ffffff", fontWeight: 900, fontSize: w * 0.18, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+            {text || "SEGUIR"}
+          </span>
+        </div>
+      );
+
+    case "verified":
+      return (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: w * 0.08, background: "rgba(10, 14, 26, 0.92)", border: `${w * 0.02}px solid ${color}`, borderRadius: w * 0.08, padding: `${w * 0.05}px ${w * 0.1}px`, transform: `scale(${sp * pulseScale})`, ...glowStyle }}>
+          <div style={{ width: w * 0.36, height: w * 0.36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", color: isLight(color) ? "#121319" : "#fff" }}>
+            <IconSvg name="check" size={w * 0.22} strokeWidth={3} />
+          </div>
+          <span style={{ color: "#ffffff", fontWeight: 800, fontSize: w * 0.16, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+            {text || "OFICIAL"}
+          </span>
+        </div>
+      );
+
+    case "fire-trend":
+      return (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: w * 0.06, background: "linear-gradient(135deg, #ef4444, #f97316)", borderRadius: w * 0.08, padding: `${w * 0.06}px ${w * 0.12}px`, transform: `scale(${sp * pulseScale})`, boxShadow: "0 8px 24px rgba(239, 68, 68, 0.5)" }}>
+          <div style={{ color: "#ffffff", transform: `scale(${1 + Math.sin((frame * 14 * Math.PI)/180) * 0.1})` }}>
+            <IconSvg name="flame" size={w * 0.32} strokeWidth={2.4} />
+          </div>
+          <span style={{ color: "#ffffff", fontWeight: 900, fontSize: w * 0.18, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+            {text || "VIRAL"}
+          </span>
+        </div>
+      );
+
+    case "tap-gesture":
+      return (
+        <div style={{ position: "relative", width: w * 0.7, height: w * 0.7, display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${sp})` }}>
+          <div style={{ position: "absolute", width: w * 0.5, height: w * 0.5, borderRadius: "50%", border: `3px solid ${color}`, transform: `scale(${rippleScale})`, opacity: rippleOpacity }} />
+          <div style={{ color, transform: `scale(${pulseScale})`, ...glowStyle }}>
+            <IconSvg name="pointer" size={w * 0.44} strokeWidth={2.5} />
+          </div>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
+
 const VIEWS: Record<Overlay["kind"], React.FC<ViewProps>> = {
   image: ImageView,
   video: BrollView,
+  sticker: StickerView,
   icon: IconView,
   lowerThird: LowerThirdView,
   callout: CalloutView,
