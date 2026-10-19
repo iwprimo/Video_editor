@@ -7,7 +7,8 @@
     "dev": "concurrently -k -n editor,render -c cyan,magenta \"vite\" \"node server/index.mjs\"",
     "build": "vite build",
     "studio": "remotion studio src/remotion/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "security:check": "node scripts/security-check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

@@ -336,10 +336,30 @@ app.get("/api/pexels/search", async (req, res) => {
   }
 });
 
+const isPexelsTrustedUrl = (urlStr) => {
+  try {
+    const u = new URL(String(urlStr));
+    if (u.protocol !== "https:") return false;
+    const h = u.hostname.toLowerCase();
+    return (
+      h === "pexels.com" ||
+      h.endsWith(".pexels.com") ||
+      h === "vimeo.com" ||
+      h.endsWith(".vimeo.com") ||
+      h === "vimeocdn.com" ||
+      h.endsWith(".vimeocdn.com")
+    );
+  } catch {
+    return false;
+  }
+};
+
 app.post("/api/pexels/download", async (req, res) => {
   try {
     const { videoUrl, id, name } = req.body ?? {};
-    if (!videoUrl) return res.status(400).json({ error: "URL do vídeo não fornecida." });
+    if (!videoUrl || !isPexelsTrustedUrl(videoUrl)) {
+      return res.status(400).json({ error: "URL inválida ou não autorizada. O download é restrito a servidores do Pexels." });
+    }
 
     const safe = safeName(name || `pexels-${id || Date.now()}`).slice(0, 30);
     const originalFile = `${Date.now().toString(36)}-pexels-${safe}.mp4`;

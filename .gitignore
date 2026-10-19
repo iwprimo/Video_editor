@@ -9,3 +9,16 @@ whisper/
 *.bin
 *.log
 .DS_Store
+
+# Credentials and secrets protection
+.env
+.env.*
+!.env.example
+*.env
+*.local
+*.key
+*.pem
+*.cert
+*.p12
+*.pfx
+secrets/

@@ -1,0 +1,16 @@
+{
+  "anthropicKey": "",
+  "anthropicModel": "claude-sonnet-5-5",
+  "promptProvider": "claude-code",
+  "claudeCodePath": "",
+  "openaiKey": "",
+  "imageModel": "gpt-image-2",
+  "imageQuality": "medium",
+  "geminiKey": "",
+  "geminiModel": "gemini-3.1-flash-image",
+  "geminiImageSize": "1K",
+  "imageProvider": "gemini",
+  "whisperModel": "small",
+  "language": "pt",
+  "pexelsKey": ""
+}
