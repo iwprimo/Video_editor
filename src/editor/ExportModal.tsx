@@ -1,4 +1,17 @@
 import React, { useState } from "react";
+import {
+  Smartphone,
+  Video,
+  Square,
+  Monitor,
+  AlertTriangle,
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Download,
+  X,
+} from "lucide-react";
 import { EXPORT_PLATFORMS, ExportPlatform, ExportQuality, FORMATS, FormatId, Project } from "../remotion/types";
 
 type Props = {
@@ -65,7 +78,7 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
           setExportedFile(s.file);
           setProgress(1);
           setStage("Concluído");
-          flash?.(`🎉 Vídeo renderizado com sucesso: ${s.file}`);
+          flash?.(`Vídeo renderizado com sucesso: ${s.file}`);
           return;
         }
         if (s.status === "error") throw new Error(s.error);
@@ -94,6 +107,22 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
     }
   };
 
+  const renderPlatformIcon = (key: ExportPlatform) => {
+    switch (key) {
+      case "reels":
+      case "tiktok":
+        return <Smartphone size={20} strokeWidth={2} />;
+      case "shorts":
+        return <Video size={20} strokeWidth={2} />;
+      case "feed":
+        return <Square size={20} strokeWidth={2} />;
+      case "landscape":
+        return <Monitor size={20} strokeWidth={2} />;
+      default:
+        return <Video size={20} strokeWidth={2} />;
+    }
+  };
+
   return (
     <div className="modal-backdrop" onClick={status === "running" ? undefined : onClose}>
       <div className="modal export-modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -101,7 +130,7 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
           <h2>Exportar Vídeo para Redes Sociais</h2>
           {status !== "running" ? (
             <button type="button" className="btn icon ghost" onClick={onClose} aria-label="Fechar">
-              ×
+              <X size={18} />
             </button>
           ) : null}
         </div>
@@ -123,7 +152,7 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
                         className={`export-platform-card ${isSelected ? "selected" : ""}`}
                         onClick={() => setPlatform(key)}
                       >
-                        <span className="ep-icon">{info.icon}</span>
+                        <span className="ep-icon">{renderPlatformIcon(key)}</span>
                         <div className="ep-info">
                           <span className="ep-name">{info.name}</span>
                           <span className="ep-res">{info.width}×{info.height}</span>
@@ -141,8 +170,9 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
               {/* Aviso se o formato do projeto for diferente do alvo */}
               {isFormatMismatch ? (
                 <div className="callout-box" style={{ background: "rgba(255, 216, 77, 0.08)", borderColor: "rgba(255, 216, 77, 0.3)" }}>
-                  <div style={{ fontSize: 13, color: "#ffd84d", fontWeight: 600 }}>
-                    ⚠️ Formato diferente da plataforma
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#ffd84d", fontWeight: 600 }}>
+                    <AlertTriangle size={15} />
+                    <span>Formato diferente da plataforma</span>
                   </div>
                   <div style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.4 }}>
                     O projeto atual está configurado como <b>{FORMATS[project.format].label}</b>, mas você escolheu exportar para <b>{currentPlatformInfo.name} ({FORMATS[currentPlatformInfo.format].label})</b>.
@@ -154,7 +184,8 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
                       style={{ alignSelf: "flex-start", marginTop: 4, background: "#ffd84d", color: "#14161f" }}
                       onClick={handleAdjustFormat}
                     >
-                      ⚡ Ajustar formato do projeto agora
+                      <Sparkles size={13} style={{ marginRight: 6, verticalAlign: "middle" }} />
+                      Ajustar formato do projeto agora
                     </button>
                   ) : null}
                 </div>
@@ -185,7 +216,9 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
 
           {status === "running" ? (
             <div className="export-status-panel">
-              <span className="ep-status-icon">⚙️</span>
+              <span className="ep-status-icon">
+                <Loader2 className="spin" size={28} />
+              </span>
               <div className="ep-status-stage">{stage}…</div>
               <div className="export-progress-bar">
                 <div className="export-progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
@@ -199,7 +232,9 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
 
           {status === "done" ? (
             <div className="export-status-panel success">
-              <span className="ep-status-icon">🎉</span>
+              <span className="ep-status-icon">
+                <CheckCircle2 size={28} style={{ color: "var(--accent, #ffd84d)" }} />
+              </span>
               <div className="ep-status-stage">Vídeo pronto para publicação!</div>
               <p className="field-hint" style={{ textAlign: "center", color: "var(--ink)", fontWeight: 500 }}>
                 Arquivo gerado: <code>{exportedFile}</code>
@@ -209,9 +244,10 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
                   className="btn primary"
                   href={`/api/download/${renderId}`}
                   download={exportedFile}
-                  style={{ textDecoration: "none", padding: "8px 20px", fontSize: 14 }}
+                  style={{ textDecoration: "none", padding: "8px 20px", fontSize: 14, display: "inline-flex", alignItems: "center" }}
                 >
-                  ⬇️ Baixar MP4
+                  <Download size={15} style={{ marginRight: 6 }} />
+                  Baixar MP4
                 </a>
                 <button type="button" className="btn ghost" onClick={onClose}>
                   Fechar
@@ -222,7 +258,9 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
 
           {status === "error" ? (
             <div className="export-status-panel error">
-              <span className="ep-status-icon">❌</span>
+              <span className="ep-status-icon">
+                <XCircle size={28} style={{ color: "var(--danger, #ff5555)" }} />
+              </span>
               <div className="ep-status-stage">Falha na renderização</div>
               <p className="field-hint" style={{ textAlign: "center", color: "var(--danger)" }}>
                 {errorMsg}
@@ -245,7 +283,8 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
               Cancelar
             </button>
             <button type="button" className="btn primary" onClick={startRender}>
-              🚀 Iniciar Renderização MP4
+              <Download size={15} style={{ marginRight: 6, verticalAlign: "middle" }} />
+              Iniciar Renderização MP4
             </button>
           </div>
         ) : null}

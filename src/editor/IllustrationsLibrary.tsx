@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { Film } from "lucide-react";
 import { IconSvg } from "../remotion/overlays";
 import { ImageAsset, OVERLAYS, OverlayKind } from "../remotion/types";
 import { searchIcons } from "./iconSearch";
@@ -243,7 +244,7 @@ export const IllustrationsLibrary: React.FC<Props> = (p) => {
                       title={a.name}
                       aria-label={`Inserir B-Roll ${a.name}`}
                     >
-                      <span style={{ fontSize: 24 }}>🎬</span>
+                      <Film size={24} color="#ffd84d" />
                       <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink, #fff)", lineHeight: 1.2, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {a.name}
                       </span>

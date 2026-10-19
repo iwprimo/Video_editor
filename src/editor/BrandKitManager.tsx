@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Sparkles, Save } from "lucide-react";
 import { BRAND_KITS, BrandKit, Project, Scene } from "../remotion/types";
 
 const STORAGE_KEY = "editor_custom_brand_kits";
@@ -64,7 +65,7 @@ export const BrandKitManager: React.FC<Props> = ({ project, onProject, onRepurpo
       } as any;
     }
     onProject(patch);
-    flash?.(`✨ Brand Kit "${kit.name}" aplicado com sucesso!`);
+    flash?.(`Brand Kit "${kit.name}" aplicado com sucesso!`);
   };
 
   const handleSaveCurrentAsKit = () => {
@@ -85,7 +86,7 @@ export const BrandKitManager: React.FC<Props> = ({ project, onProject, onRepurpo
     setSelectedKitId(newKit.id);
     setIsSavingCustom(false);
     setCustomName("");
-    flash?.(`💾 Brand Kit "${trimmed}" salvo com sucesso!`);
+    flash?.(`Brand Kit "${trimmed}" salvo com sucesso!`);
   };
 
   const handleDeleteCustomKit = (id: string) => {
@@ -103,14 +104,23 @@ export const BrandKitManager: React.FC<Props> = ({ project, onProject, onRepurpo
       {project.format !== "portrait" && onRepurposeForSocial ? (
         <div className="repurpose-card">
           <div className="repurpose-head">
-            <span className="repurpose-badge">⚡ 1-Click Repurposing</span>
+            <span className="repurpose-badge" style={{ display: "inline-flex", alignItems: "center" }}>
+              <Sparkles size={12} style={{ marginRight: 4 }} />
+              1-Click Repurposing
+            </span>
             <span className="repurpose-title">Converter para Reels/TikTok 9:16</span>
           </div>
           <p className="repurpose-desc">
             Ajusta proporção para vertical, ativa fundo desfocado (Smart Blur), Safe Zones, zoom dinâmico (Punch-in) e Barra de Retenção.
           </p>
-          <button type="button" className="btn primary sm wide" onClick={onRepurposeForSocial}>
-            🚀 Converter este vídeo para 9:16
+          <button
+            type="button"
+            className="btn primary sm wide"
+            onClick={onRepurposeForSocial}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <Sparkles size={14} style={{ marginRight: 6 }} />
+            Converter este vídeo para 9:16
           </button>
         </div>
       ) : null}
@@ -142,7 +152,7 @@ export const BrandKitManager: React.FC<Props> = ({ project, onProject, onRepurpo
             <optgroup label="Seus Brand Kits Salvos">
               {customKits.map((k) => (
                 <option key={k.id} value={k.id}>
-                  ⭐ {k.name}
+                  {k.name}
                 </option>
               ))}
             </optgroup>
@@ -240,8 +250,10 @@ export const BrandKitManager: React.FC<Props> = ({ project, onProject, onRepurpo
             type="button"
             className="btn ghost sm wide"
             onClick={() => setIsSavingCustom(true)}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
           >
-            💾 Salvar estilo atual como Brand Kit
+            <Save size={14} style={{ marginRight: 6 }} />
+            Salvar estilo atual como Brand Kit
           </button>
         )}
       </div>

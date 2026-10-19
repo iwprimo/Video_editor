@@ -829,11 +829,10 @@ export type ExportOptions = {
 
 export const EXPORT_PLATFORMS: Record<
   ExportPlatform,
-  { name: string; icon: string; format: FormatId; width: number; height: number; fps: number; crf: number; hint: string }
+  { name: string; format: FormatId; width: number; height: number; fps: number; crf: number; hint: string }
 > = {
   reels: {
     name: "Instagram Reels",
-    icon: "📱",
     format: "portrait",
     width: 1080,
     height: 1920,
@@ -843,7 +842,6 @@ export const EXPORT_PLATFORMS: Record<
   },
   tiktok: {
     name: "TikTok",
-    icon: "🎵",
     format: "portrait",
     width: 1080,
     height: 1920,
@@ -853,7 +851,6 @@ export const EXPORT_PLATFORMS: Record<
   },
   shorts: {
     name: "YouTube Shorts",
-    icon: "🔴",
     format: "portrait",
     width: 1080,
     height: 1920,
@@ -863,7 +860,6 @@ export const EXPORT_PLATFORMS: Record<
   },
   feed: {
     name: "Feed Quadrado (1:1)",
-    icon: "⏹️",
     format: "square",
     width: 1080,
     height: 1080,
@@ -873,7 +869,6 @@ export const EXPORT_PLATFORMS: Record<
   },
   landscape: {
     name: "Horizontal (16:9)",
-    icon: "🖥️",
     format: "landscape",
     width: 1920,
     height: 1080,

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Volume2, Film } from "lucide-react";
 import { IconSvg } from "../remotion/overlays";
 import {
   FPS,
@@ -151,8 +152,10 @@ export const OverlayInspector: React.FC<Props> = ({ overlay: ov, project, onChan
             disabled={!ov.sfx || ov.sfx === "none"}
             onClick={() => playSfxPreview(ov.sfx ?? "pop")}
             title="Ouvir prévia do som"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
           >
-            🔊 Ouvir
+            <Volume2 size={13} style={{ marginRight: 4 }} />
+            Ouvir
           </button>
         </div>
       </div>
@@ -219,7 +222,7 @@ export const OverlayInspector: React.FC<Props> = ({ overlay: ov, project, onChan
                           wordBreak: "break-all",
                         }}
                       >
-                        <span style={{ fontSize: 18, marginBottom: 2 }}>🎬</span>
+                        <Film size={20} color="#ffd84d" style={{ marginBottom: 4 }} />
                         <span style={{ lineHeight: 1.1, color: "#eef0f7" }}>{a.name}</span>
                       </div>
                     ) : (

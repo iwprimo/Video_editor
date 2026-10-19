@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import {
   CAPTION_PRESETS,
   DEFAULT_CAPTIONS,
@@ -303,8 +304,9 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
           </label>
         </div>
         {scene.punchInPattern === "alternate" ? (
-          <div style={{ fontSize: 11, color: "var(--muted, #8e94ab)", marginTop: 6, lineHeight: 1.4 }}>
-            💡 Aproxima a câmera automaticamente nos cortes ímpares ({scene.segments.length} segmentos) para prender a atenção do espectador estilo MrBeast/Alex Hormozi.
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 11, color: "var(--muted, #8e94ab)", marginTop: 6, lineHeight: 1.4 }}>
+            <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>Aproxima a câmera automaticamente nos cortes ímpares ({scene.segments.length} segmentos) para prender a atenção do espectador estilo MrBeast/Alex Hormozi.</span>
           </div>
         ) : null}
       </div>
@@ -485,7 +487,7 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
               checked={!!captions.autoEmoji}
               onChange={(e) => onProject({ captions: { ...captions, autoEmoji: e.target.checked } })}
             />
-            <span>Emojis automáticos (🔥, 💸, 🚀, 🎯...)</span>
+            <span>Destacar palavras-chave com emojis nas legendas</span>
           </label>
         </>
       ) : null}

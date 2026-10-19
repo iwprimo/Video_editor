@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Volume2, Sparkles, Info, RefreshCw, Check, Music } from "lucide-react";
 import { CaptionPicker, pickStyle } from "./CaptionPicker";
 import { uploadFile } from "./api";
 import { playSfxPreview } from "../remotion/sfx";
@@ -354,8 +355,10 @@ const TransitionEditor: React.FC<{ scene: Scene; isLast: boolean; onScene: Props
                 disabled={!t.sfx || t.sfx === "none"}
                 onClick={() => playSfxPreview(t.sfx ?? "whoosh")}
                 title="Ouvir som da transição"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
-                🔊 Ouvir
+                <Volume2 size={13} style={{ marginRight: 4 }} />
+                Ouvir
               </button>
             </div>
           </div>
@@ -514,7 +517,7 @@ const CaptionFields: React.FC<{ project: Project; onProject: Props["onProject"] 
 
           <label className="toggle">
             <input type="checkbox" checked={!!c.autoEmoji} onChange={(e) => set({ autoEmoji: e.target.checked })} />
-            <span>Emojis automáticos em palavras-chave (🔥, 💸, 🚀, 🎯...)</span>
+            <span>Destacar palavras-chave com emojis nas legendas</span>
           </label>
 
           <label className="toggle">
@@ -581,17 +584,18 @@ const AudioTrackEditor: React.FC<{
                 }
               }}
             >
-              <option value="lofi-chill">🎵 Lo-Fi Chill (Suave / Relaxante)</option>
-              <option value="corporate-upbeat">✨ Upbeat Pop (Dinâmico / Positivo)</option>
-              <option value="cinematic-pulse">🎬 Cinematic Pulse (Foco / Profundo)</option>
-              <option value="custom">📁 Música Própria (Upload)</option>
+              <option value="lofi-chill">Lo-Fi Chill (Suave / Relaxante)</option>
+              <option value="corporate-upbeat">Upbeat Pop (Dinâmico / Positivo)</option>
+              <option value="cinematic-pulse">Cinematic Pulse (Foco / Profundo)</option>
+              <option value="custom">Música Própria (Upload)</option>
             </select>
           </Field>
 
           {audio.preset === "custom" || audio.file ? (
             <div className="audio-upload-box">
-              <span className="audio-file-name" title={audio.name ?? audio.file}>
-                {audio.name ? `🎵 ${audio.name}` : audio.file ? `🎵 ${audio.file}` : "Nenhum arquivo enviado"}
+              <span className="audio-file-name" title={audio.name ?? audio.file} style={{ display: "inline-flex", alignItems: "center" }}>
+                <Music size={13} style={{ marginRight: 6, flexShrink: 0 }} />
+                <span>{audio.name || audio.file || "Nenhum arquivo enviado"}</span>
               </span>
               <label className="btn ghost sm" style={{ cursor: "pointer" }}>
                 {uploading ? "Enviando…" : "Escolher arquivo"}
@@ -650,9 +654,15 @@ const AudioTrackEditor: React.FC<{
             <>
               <div className="ducking-badge">
                 {wordsCount > 0 ? (
-                  <span>✨ <b>{wordsCount} palavras</b> detectadas para auto-ducking suave</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Sparkles size={13} color="#ffd84d" />
+                    <span><b>{wordsCount} palavras</b> detectadas para auto-ducking suave</span>
+                  </span>
                 ) : (
-                  <span>ℹ️ Sem transcrição ainda (volume tocará constante)</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Info size={13} />
+                    <span>Sem transcrição ainda (volume tocará constante)</span>
+                  </span>
                 )}
               </div>
 
@@ -768,14 +778,15 @@ const ProgressBarFields: React.FC<{ project: Project; onProject: Props["onProjec
             <button
               type="button"
               className="btn ghost sm"
-              style={{ width: "100%", fontSize: 11 }}
+              style={{ width: "100%", fontSize: 11, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               onClick={() => {
                 set({ color: project.theme.accent });
                 flash?.("Cor do progresso sincronizada com o tema!");
               }}
               title="Redefinir cor da barra para a cor de destaque do tema atual"
             >
-              🔄 Sincronizar com cor de destaque ({project.theme.accent})
+              <RefreshCw size={13} style={{ marginRight: 6 }} />
+              Sincronizar com cor de destaque ({project.theme.accent})
             </button>
           </div>
         </>
@@ -966,15 +977,17 @@ const ProjectFields: React.FC<{
                 };
               }
               onProject(patch);
-              flash?.(`🎨 Tema "${t.name}" aplicado com sucesso!`);
+              flash?.(`Tema "${t.name}" aplicado com sucesso!`);
             }}
             title={`Aplicar tema ${t.name}`}
+            style={{ display: "inline-flex", alignItems: "center" }}
           >
             <span className="preset-sw" style={{ background: t.theme.bg }}>
               <span style={{ background: t.theme.ink }} />
               <span style={{ background: t.theme.accent }} />
             </span>
-            {t.name} {isCurrent ? "✓" : ""}
+            <span>{t.name}</span>
+            {isCurrent ? <Check size={13} style={{ marginLeft: "auto" }} /> : null}
           </button>
         );
       })}

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Player, PlayerRef } from "@remotion/player";
+import { Heart, MessageCircle, Bookmark, Share2, Download, Shield, Sparkles } from "lucide-react";
 import { Video } from "../remotion/Video";
 import {
   DEFAULT_CAPTIONS,
@@ -66,10 +67,10 @@ const SafeZonesOverlay: React.FC = () => (
       <span className="sz-badge">Topo (Abas e Busca)</span>
     </div>
     <div className="sz-right">
-      <span className="sz-icon-ghost">❤️</span>
-      <span className="sz-icon-ghost">💬</span>
-      <span className="sz-icon-ghost">🔖</span>
-      <span className="sz-icon-ghost">↗️</span>
+      <span className="sz-icon-ghost"><Heart size={18} fill="currentColor" /></span>
+      <span className="sz-icon-ghost"><MessageCircle size={18} fill="currentColor" /></span>
+      <span className="sz-icon-ghost"><Bookmark size={18} fill="currentColor" /></span>
+      <span className="sz-icon-ghost"><Share2 size={18} /></span>
     </div>
     <div className="sz-bottom">
       <div className="sz-bottom-placeholder" />
@@ -748,7 +749,7 @@ export const App: React.FC = () => {
       progressBar: nextProgressBar,
     });
 
-    flash("⚡ Vídeo reproveitado para 9:16 (Smart Reframe Blur, Safe Zones, Punch-in e Barra de Retenção ativados)!");
+    flash("Vídeo reproveitado para 9:16 (Smart Reframe Blur, Safe Zones, Punch-in e Barra de Retenção ativados)!");
   };
 
   const adjustFormat = (targetFormat: FormatId) => {
@@ -902,8 +903,10 @@ export const App: React.FC = () => {
             className="btn primary"
             onClick={() => setExportModalOpen(true)}
             title="Abrir opções de exportação para Reels, TikTok, Shorts e redes sociais"
+            style={{ display: "inline-flex", alignItems: "center" }}
           >
-            🚀 Exportar Vídeo…
+            <Download size={15} style={{ marginRight: 6 }} />
+            Exportar Vídeo…
           </button>
         </div>
       </header>
@@ -958,8 +961,10 @@ export const App: React.FC = () => {
                   className={`stage-safe-toggle ${showSafeZones ? "active" : ""}`}
                   onClick={() => setShowSafeZones(!showSafeZones)}
                   title="Alternar guia de margens do TikTok e Instagram Reels"
+                  style={{ display: "inline-flex", alignItems: "center" }}
                 >
-                  🛡️ Safe Zones {showSafeZones ? "ON" : "OFF"}
+                  <Shield size={13} style={{ marginRight: 4 }} />
+                  Safe Zones {showSafeZones ? "ON" : "OFF"}
                 </button>
               </>
             ) : (
@@ -970,8 +975,10 @@ export const App: React.FC = () => {
                   className="stage-safe-toggle highlight"
                   onClick={repurposeForSocial}
                   title="Converter para Reels/TikTok 9:16 com Smart Reframe e Safe Zones"
+                  style={{ display: "inline-flex", alignItems: "center" }}
                 >
-                  ⚡ Reproveitar 9:16
+                  <Sparkles size={13} style={{ marginRight: 4 }} />
+                  Reproveitar 9:16
                 </button>
               </>
             )}
