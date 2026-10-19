@@ -167,8 +167,9 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
       <div className="reframe-box">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <span className="field-label" style={{ fontWeight: 600 }}>Smart Reframe (Posição & Zoom)</span>
-          {(scene.panX !== undefined && scene.panX !== 0) || (scene.scale !== undefined && scene.scale !== 1) ? (
+          {(scene.panX !== undefined && scene.panX !== 0) || (scene.panY !== undefined && scene.panY !== 0) || (scene.scale !== undefined && scene.scale !== 1) ? (
             <button
+              type="button"
               className="btn tiny ghost"
               style={{ padding: "2px 6px", fontSize: 11 }}
               onClick={() => onScene({ panX: 0, panY: 0, scale: 1 } as Partial<Scene>)}
@@ -194,19 +195,34 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
             </span>
           </label>
           <label className="field">
-            <span className="field-label">Zoom / Escala</span>
+            <span className="field-label">Posição Vertical (Pan Y)</span>
             <span className="slider">
               <input
                 type="range"
-                min={0.8}
-                max={2.0}
-                step={0.05}
-                value={scene.scale ?? 1.0}
-                onChange={(e) => onScene({ scale: Number(e.target.value) } as Partial<Scene>, "scale")}
+                min={-50}
+                max={50}
+                step={1}
+                value={scene.panY ?? 0}
+                onChange={(e) => onScene({ panY: Number(e.target.value) } as Partial<Scene>, "panY")}
               />
-              <span className="slider-val">{Math.round((scene.scale ?? 1.0) * 100)}%</span>
+              <span className="slider-val">{(scene.panY ?? 0) > 0 ? `+${scene.panY}` : (scene.panY ?? 0)}%</span>
             </span>
           </label>
+        </div>
+
+        <div className="field" style={{ marginTop: 8 }}>
+          <span className="field-label">Zoom / Escala</span>
+          <span className="slider">
+            <input
+              type="range"
+              min={0.8}
+              max={2.0}
+              step={0.05}
+              value={scene.scale ?? 1.0}
+              onChange={(e) => onScene({ scale: Number(e.target.value) } as Partial<Scene>, "scale")}
+            />
+            <span className="slider-val">{Math.round((scene.scale ?? 1.0) * 100)}%</span>
+          </span>
         </div>
 
         {(scene.bgMode ?? (project.format === "portrait" && scene.srcWidth > scene.srcHeight ? "blur" : scene.fit)) === "blur" ? (
