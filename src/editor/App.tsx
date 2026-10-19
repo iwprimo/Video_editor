@@ -315,6 +315,70 @@ export const App: React.FC = () => {
     setSelectedId(scenes[Math.min(idx, scenes.length - 1)].id);
   };
 
+  const starts = useMemo(() => sceneStarts(project.scenes), [project.scenes]);
+  const canSplit = useMemo(() => {
+    return project.scenes.some((s, i) => frame > starts[i] + 5 && frame < starts[i] + s.duration - 5);
+  }, [project.scenes, starts, frame]);
+
+  const splitSceneAtPlayhead = () => {
+    const idx = project.scenes.findIndex((s, i) => frame > starts[i] + 5 && frame < starts[i] + s.duration - 5);
+    if (idx < 0) {
+      flash("Posicione o cursor dentro de uma cena (com pelo menos 6 quadros de folga) para cortar.");
+      return;
+    }
+    const scene = project.scenes[idx];
+    const offsetFrames = frame - starts[idx];
+    const splitLocalSeconds = offsetFrames / FPS;
+
+    let scene1: Scene;
+    let scene2: Scene;
+    const newId2 = uid();
+
+    if (scene.type === "video") {
+      let accumulated = 0;
+      const segs1: typeof scene.segments = [];
+      const segs2: typeof scene.segments = [];
+      for (const seg of scene.segments) {
+        const len = seg.end - seg.start;
+        if (accumulated + len <= splitLocalSeconds) {
+          segs1.push({ ...seg });
+          accumulated += len;
+        } else if (accumulated < splitLocalSeconds) {
+          const cutPoint = seg.start + (splitLocalSeconds - accumulated);
+          segs1.push({ ...seg, end: cutPoint });
+          segs2.push({ ...seg, start: cutPoint });
+          accumulated = splitLocalSeconds;
+        } else {
+          segs2.push({ ...seg });
+        }
+      }
+      scene1 = withVideoDuration({ ...scene, segments: segs1 });
+      scene2 = withVideoDuration({ ...scene, id: newId2, segments: segs2 });
+    } else {
+      scene1 = { ...scene, duration: offsetFrames };
+      scene2 = { ...structuredClone(scene), id: newId2, duration: scene.duration - offsetFrames };
+    }
+
+    const nextOverlays = (project.overlays ?? []).map((o) => {
+      if (o.sceneId !== scene.id) return o;
+      if (o.at >= splitLocalSeconds) {
+        return { ...o, sceneId: newId2, at: Math.max(0, o.at - splitLocalSeconds) };
+      }
+      return o;
+    });
+
+    const nextScenes = [...project.scenes];
+    nextScenes.splice(idx, 1, scene1, scene2);
+
+    history.set({
+      ...project,
+      scenes: nextScenes,
+      overlays: nextOverlays,
+    });
+    setSelectedId(newId2);
+    flash("Cena cortada no ponto do cursor (Atalho: S ou C)");
+  };
+
   // ---------- Seleção ----------
   const selectScene = (id: string) => {
     setSelectedId(id);
@@ -597,6 +661,9 @@ export const App: React.FC = () => {
       } else if (mod && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateScene();
+      } else if (!mod && (e.key.toLowerCase() === "s" || e.key.toLowerCase() === "c")) {
+        e.preventDefault();
+        splitSceneAtPlayhead();
       } else if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedOverlayId) deleteOverlay();
         else deleteScene();
@@ -1014,6 +1081,8 @@ export const App: React.FC = () => {
         onSelectOverlay={selectOverlay}
         onDropOverlay={(f, payload) => addOverlay(payload, f)}
         onImportVideo={() => videoInputRef.current?.click()}
+        onSplit={splitSceneAtPlayhead}
+        canSplit={canSplit}
       />
 
       <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} onSaved={setConfig} />

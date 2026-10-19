@@ -41,6 +41,8 @@ type Props = {
   onSelectOverlay: (id: string) => void;
   onDropOverlay: (frame: number, payload: OverlayPayload) => void;
   onImportVideo: () => void;
+  onSplit?: () => void;
+  canSplit?: boolean;
 };
 
 const SNAP = 15; // meio segundo
@@ -345,6 +347,22 @@ export const Timeline: React.FC<Props> = (p) => {
         </div>
         <button className="btn ghost" onClick={p.onDuplicate} disabled={selectedIndex < 0} title="Duplicar (Ctrl+D)">
           Duplicar
+        </button>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={p.onSplit}
+          disabled={!p.canSplit}
+          title="Cortar cena no ponto do cursor (Atalho: S ou C)"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ verticalAlign: "middle", marginRight: 4 }}>
+            <circle cx="6" cy="6" r="3" />
+            <circle cx="6" cy="18" r="3" />
+            <line x1="20" y1="4" x2="8.12" y2="15.88" />
+            <line x1="14.47" y1="14.48" x2="20" y2="20" />
+            <line x1="8.12" y1="8.12" x2="12" y2="12" />
+          </svg>
+          Cortar
         </button>
         <button className="btn ghost danger" onClick={p.onDelete} disabled={selectedIndex < 0 || project.scenes.length <= 1} title="Excluir (Delete)">
           Excluir
