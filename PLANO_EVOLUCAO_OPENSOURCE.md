@@ -88,11 +88,15 @@ A **Fase A** transforma o editor em uma estação de trabalho de alta precisão 
 ### 🗺️ Roadmap Futuro (Fases B e C)
 > *Nota: Conforme diretriz do autor, o módulo de limpeza de áudio/redução de ruído foi descartado para manter foco estrito nas ferramentas de retenção visual e narrativa.*
 
-#### Fase B: Dinâmica & Layouts de Retenção
-1. **Modo Tela Dividida (Split Screen 50/50):**
-   - Apresentador em cima + vídeo satisfatório/gameplay embaixo.
-2. **Biblioteca de Stickers Animados em SVG:**
-   - Setas de atenção, círculos de destaque e gráficos de retenção com som procedural sincronizado.
+#### Fase B: Dinâmica & Layouts de Retenção [CONCLUÍDA & ENTREGUE]
+1. **Modo Tela Dividida (Split Screen 50/50 & Layouts de Retenção):**
+   - Apresentador em cima / vídeo de apoio (B-roll, gameplay, slime/satisfying) embaixo, ou invertido.
+   - Proporções configuráveis: 50/50, 65/35, 35/65 com Pan X, Pan Y, zoom e controle de volume dedicado do vídeo secundário.
+   - Divisor estético personalizável (cor, espessura e glow neon).
+2. **Biblioteca de Stickers Animados em SVG (Callouts & Viral SFX):**
+   - 9 modelos de retenção em SVG nativo: Seta Curva/Direita/Baixo, Círculo de Foco pulsante, Alerta, Inscrever-se/Seguir (Pill), Verificado, Em Alta (Chama), Clique Aqui (Gesto de Toque).
+   - Animações procedurais (bounce, pulse, ripple) com áudio procedural sincronizado (pop, whoosh, ding, tap).
+   - Aba dedicada na Biblioteca de Ilustrações e painel completo no Inspetor de Overlays.
 
 #### Fase C: Automação & Crescimento
 1. **Auto B-Roll Integrado (Pexels API):**
