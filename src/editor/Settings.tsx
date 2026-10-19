@@ -22,6 +22,9 @@ export type PublicConfig = {
   imageProvider: "gemini" | "openai";
   whisperModel: string;
   language: string;
+  pexelsKey: string;
+  hasPexelsKey: boolean;
+  pexelsKeyProblem?: string | null;
 };
 
 type CCStatus = {
@@ -65,6 +68,7 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
   const [anthropicKey, setAnthropicKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
+  const [pexelsKey, setPexelsKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -90,6 +94,7 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
     setAnthropicKey("");
     setOpenaiKey("");
     setGeminiKey("");
+    setPexelsKey("");
     setCc(null);
     loadConfig()
       .then((c) => {
@@ -129,12 +134,14 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
         imageProvider: cfg.imageProvider,
         whisperModel: cfg.whisperModel,
         language: cfg.language,
+        pexelsKey,
       });
       onSaved(out);
       setCfg(out);
       setAnthropicKey("");
       setOpenaiKey("");
       setGeminiKey("");
+      setPexelsKey("");
       setSaved(true);
       setTimeout(onClose, 900);
     } catch (e) {
@@ -144,7 +151,7 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
     }
   };
 
-  const clear = async (key: "anthropicKey" | "openaiKey" | "geminiKey") => {
+  const clear = async (key: "anthropicKey" | "openaiKey" | "geminiKey" | "pexelsKey") => {
     const out = await postJson<PublicConfig>("/api/config/clear", { key });
     setCfg(out);
     onSaved(out);
@@ -376,6 +383,29 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
                   </select>
                 </label>
               </div>
+            </section>
+
+            <section>
+              <h3>Pexels (Auto B-Roll & Vídeos Gratuitos)</h3>
+              <label className="field">
+                <span className="field-label">Chave da API do Pexels</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="off"
+                  placeholder={cfg.hasPexelsKey ? "Cole uma chave nova para trocar" : "Cole sua chave de API do Pexels"}
+                  value={pexelsKey}
+                  onChange={(e) => setPexelsKey(e.target.value)}
+                />
+                <KeyStatus has={cfg.hasPexelsKey} masked={cfg.pexelsKey} problem={cfg.pexelsKeyProblem} onClear={() => clear("pexelsKey")} />
+                <span className="field-hint">
+                  Obtenha sua chave gratuita em{" "}
+                  <a href="https://www.pexels.com/api/" target="_blank" rel="noreferrer" style={{ color: "#38bdf8", textDecoration: "underline" }}>
+                    pexels.com/api
+                  </a>{" "}
+                  (rápido e 100% gratuito). Permite buscar e baixar milhões de vídeos em alta resolução diretamente para o projeto.
+                </span>
+              </label>
             </section>
           </div>
         )}

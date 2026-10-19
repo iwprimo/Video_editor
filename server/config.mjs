@@ -17,9 +17,10 @@ export const DEFAULTS = {
   imageProvider: "gemini",
   whisperModel: "small",
   language: "pt",
+  pexelsKey: "",
 };
 
-const KEYS = ["anthropicKey", "openaiKey", "geminiKey"];
+const KEYS = ["anthropicKey", "openaiKey", "geminiKey", "pexelsKey"];
 
 // Confere o formato da chave antes de salvar. Devolve a mensagem do problema, ou null.
 export const keyProblem = (k, v) => {
@@ -34,7 +35,7 @@ export const keyProblem = (k, v) => {
   return null;
 };
 
-const ENV = { anthropicKey: "ANTHROPIC_API_KEY", openaiKey: "OPENAI_API_KEY", geminiKey: "GEMINI_API_KEY" };
+const ENV = { anthropicKey: "ANTHROPIC_API_KEY", openaiKey: "OPENAI_API_KEY", geminiKey: "GEMINI_API_KEY", pexelsKey: "PEXELS_API_KEY" };
 
 export const createConfig = (root) => {
   const file = path.join(root, "config.json");
@@ -85,6 +86,9 @@ export const createConfig = (root) => {
       imageProvider: data.imageProvider,
       whisperModel: data.whisperModel,
       language: data.language,
+      pexelsKey: mask(data.pexelsKey),
+      hasPexelsKey: !!data.pexelsKey,
+      pexelsKeyProblem: keyProblem("pexelsKey", data.pexelsKey),
     }),
     // Chaves novas que vieram no pedido (já sem espaços nas pontas), sem as vazias/mascaradas
     newKeys: (patch) => {

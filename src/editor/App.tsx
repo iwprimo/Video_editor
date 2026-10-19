@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Player, PlayerRef } from "@remotion/player";
-import { Heart, MessageCircle, Bookmark, Share2, Download, Shield, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, Download, Shield, Sparkles, Flame, Scissors } from "lucide-react";
 import { Video } from "../remotion/Video";
 import {
   DEFAULT_CAPTIONS,
@@ -43,6 +43,8 @@ import { OverlayInspector } from "./OverlayInspector";
 import { PromptBar, PromptEntry } from "./PromptBar";
 import { PublicConfig, Settings, loadConfig } from "./Settings";
 import { ExportModal } from "./ExportModal";
+import { HighlightsModal, Highlight } from "./HighlightsModal";
+import { SocialCopyModal } from "./SocialCopyModal";
 import { applyOps, AiOp } from "./ops";
 import { imageSize, pollJob, postJson, uploadFile } from "./api";
 
@@ -112,6 +114,8 @@ export const App: React.FC = () => {
   const [config, setConfig] = useState<PublicConfig | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [highlightsOpen, setHighlightsOpen] = useState(false);
+  const [socialCopyOpen, setSocialCopyOpen] = useState(false);
   const [promptBusy, setPromptBusy] = useState(false);
   const [promptStatus, setPromptStatus] = useState<string | null>(null);
   const [promptHistory, setPromptHistory] = useState<PromptEntry[]>([]);
@@ -378,6 +382,55 @@ export const App: React.FC = () => {
     });
     setSelectedId(newId2);
     flash("Cena cortada no ponto do cursor (Atalho: S ou C)");
+  };
+
+  // ---------- Melhores Momentos (Shorts por IA) ----------
+  const handleApplyHighlight = (h: Highlight, mode: "isolate" | "newScene") => {
+    const vScene = project.scenes.find((s): s is VideoScene => s.type === "video");
+    if (!vScene) return;
+
+    if (mode === "isolate") {
+      const nextScene: VideoScene = withVideoDuration({
+        ...vScene,
+        segments: [{ start: h.start, end: h.end }],
+      });
+      history.set({
+        ...project,
+        name: h.title,
+        captions: { ...(project.captions ?? DEFAULT_CAPTIONS), enabled: true },
+        scenes: project.scenes.map((s) => (s.id === vScene.id ? nextScene : s)),
+      });
+      flash(`Short criado com sucesso: "${h.title}"! Legendas ativadas.`);
+      seek(0);
+    } else {
+      const newId = uid();
+      const newScene: VideoScene = withVideoDuration({
+        ...structuredClone(vScene),
+        id: newId,
+        segments: [{ start: h.start, end: h.end }],
+      });
+      const idx = project.scenes.findIndex((s) => s.id === vScene.id);
+      const nextScenes = [...project.scenes];
+      nextScenes.splice(idx + 1, 0, newScene);
+      history.set({
+        ...project,
+        scenes: nextScenes,
+      });
+      setSelectedId(newId);
+      flash(`Nova cena de Short criada: "${h.title}"!`);
+    }
+  };
+
+  const handlePreviewTime = (secs: number) => {
+    const vScene = project.scenes.find((s): s is VideoScene => s.type === "video");
+    if (!vScene) return;
+    const sIdx = project.scenes.findIndex((s) => s.id === vScene.id);
+    const startFr = sIdx >= 0 ? sceneStarts(project.scenes)[sIdx] || 0 : 0;
+    const localSecs = sourceToLocal(vScene.segments, secs);
+    if (localSecs !== null) {
+      seek(startFr + Math.round(localSecs * FPS));
+      playerRef.current?.play();
+    }
   };
 
   // ---------- Seleção ----------
@@ -900,6 +953,26 @@ export const App: React.FC = () => {
           <span className="sep" />
           <button
             type="button"
+            className="btn ghost"
+            onClick={() => setHighlightsOpen(true)}
+            title="Extrair melhores momentos para Shorts com IA (Opus Clip local)"
+            style={{ display: "inline-flex", alignItems: "center" }}
+          >
+            <Flame size={15} style={{ marginRight: 6, color: "#f97316" }} />
+            Melhores Momentos
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => setSocialCopyOpen(true)}
+            title="Gerar legendas, ganchos e hashtags para TikTok, Reels e Shorts"
+            style={{ display: "inline-flex", alignItems: "center" }}
+          >
+            <Share2 size={15} style={{ marginRight: 6, color: "#a855f7" }} />
+            Copy & SEO
+          </button>
+          <button
+            type="button"
             className="btn primary"
             onClick={() => setExportModalOpen(true)}
             title="Abrir opções de exportação para Reels, TikTok, Shorts e redes sociais"
@@ -925,7 +998,9 @@ export const App: React.FC = () => {
           }}
           generating={generating}
           uploading={uploading}
+          words={scene?.type === "video" ? scene.words : project.scenes.find((s): s is VideoScene => s.type === "video")?.words}
           onAddOverlay={(p) => addOverlay(p)}
+          onAddAsset={(a) => history.set((p) => ({ ...p, assets: [...(p.assets ?? []), a] }))}
           onUpload={uploadImages}
           onUploadBroll={uploadBroll}
           onGenerate={generateImage}
@@ -1099,7 +1174,22 @@ export const App: React.FC = () => {
         onClose={() => setExportModalOpen(false)}
         project={project}
         onAdjustFormat={adjustFormat}
+        onOpenSocialCopy={() => setSocialCopyOpen(true)}
         flash={flash}
+      />
+
+      <HighlightsModal
+        open={highlightsOpen}
+        onClose={() => setHighlightsOpen(false)}
+        project={project}
+        onApplyHighlight={handleApplyHighlight}
+        onPreviewTime={handlePreviewTime}
+      />
+
+      <SocialCopyModal
+        open={socialCopyOpen}
+        onClose={() => setSocialCopyOpen(false)}
+        project={project}
       />
 
       {dragOver ? (

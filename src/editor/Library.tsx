@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { EffectsLibrary, FxPayload } from "./EffectsLibrary";
 import { IllustrationsLibrary, ImageKeys, ImageProvider, OverlayPayload } from "./IllustrationsLibrary";
-import type { ImageAsset } from "../remotion/types";
+import type { ImageAsset, Word } from "../remotion/types";
 
 type Props = {
   hasScene: boolean;
@@ -12,7 +12,9 @@ type Props = {
   imageKeys: ImageKeys;
   generating: boolean;
   uploading: string | null;
+  words?: Word[];
   onAddOverlay: (p: OverlayPayload) => void;
+  onAddAsset?: (asset: ImageAsset) => void;
   onUpload: (files: File[]) => void;
   onUploadBroll?: (files: File[]) => void;
   onGenerate: (prompt: string, aspect: "landscape" | "portrait" | "square", transparent: boolean, provider: ImageProvider) => void;
@@ -40,7 +42,9 @@ export const Library: React.FC<Props> = (p) => {
           imageKeys={p.imageKeys}
           generating={p.generating}
           uploading={p.uploading}
+          words={p.words}
           onAdd={p.onAddOverlay}
+          onAddAsset={p.onAddAsset}
           onUpload={p.onUpload}
           onUploadBroll={p.onUploadBroll}
           onGenerate={p.onGenerate}

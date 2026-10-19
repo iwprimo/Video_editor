@@ -10,7 +10,7 @@ import { renderMedia, selectComposition, ensureBrowser } from "@remotion/rendere
 import { createConfig } from "./config.mjs";
 import { probe, needsTranscode, transcode, detectSilences, safeName } from "./media.mjs";
 import { transcribeFile } from "./whisper.mjs";
-import { runPrompt, generateImage, verifyAnthropicKey, fixTranscript } from "./ai.mjs";
+import { runPrompt, generateImage, verifyAnthropicKey, fixTranscript, extractHighlights, generateSocialCopy, suggestBrolls } from "./ai.mjs";
 import { claudeCodeStatus } from "./claudecode.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -248,6 +248,165 @@ app.post("/api/image", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(e.status && e.status < 600 ? e.status : 500).json({ error: e.message });
+  }
+});
+
+// ---------- Pexels API (Auto B-Roll) ----------
+
+const CURATED_PEXELS_DEMO = [
+  {
+    id: 853889,
+    width: 1080,
+    height: 1920,
+    duration: 12,
+    image: "https://images.pexels.com/videos/853889/free-video-853889.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    user: { name: "Pexels Creator", url: "https://www.pexels.com" },
+    videoUrl: "https://videos.pexels.com/video-files/853889/853889-hd_1080_1920_25fps.mp4",
+  },
+  {
+    id: 3129671,
+    width: 1080,
+    height: 1920,
+    duration: 15,
+    image: "https://images.pexels.com/videos/3129671/free-video-3129671.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    user: { name: "Pexels Creator", url: "https://www.pexels.com" },
+    videoUrl: "https://videos.pexels.com/video-files/3129671/3129671-hd_1080_1920_30fps.mp4",
+  },
+  {
+    id: 3129957,
+    width: 1080,
+    height: 1920,
+    duration: 10,
+    image: "https://images.pexels.com/videos/3129957/free-video-3129957.jpg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+    user: { name: "Pexels Creator", url: "https://www.pexels.com" },
+    videoUrl: "https://videos.pexels.com/video-files/3129957/3129957-hd_1080_1920_25fps.mp4",
+  },
+];
+
+app.get("/api/pexels/search", async (req, res) => {
+  try {
+    const q = String(req.query.query || "").trim();
+    const orientation = String(req.query.orientation || "portrait");
+    const page = Number(req.query.page || 1);
+    const perPage = Number(req.query.perPage || 15);
+    const key = config.get().pexelsKey || process.env.PEXELS_API_KEY;
+
+    if (!key) {
+      return res.json({
+        needsKey: true,
+        videos: CURATED_PEXELS_DEMO,
+        message: "Configure sua chave gratuita do Pexels em Configurações para pesquisar no catálogo completo com milhões de vídeos.",
+      });
+    }
+
+    const url = new URL("https://api.pexels.com/videos/search");
+    url.searchParams.set("query", q || "nature");
+    if (orientation !== "all") url.searchParams.set("orientation", orientation);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("per_page", String(perPage));
+
+    const pexelsRes = await fetch(url.toString(), {
+      headers: { Authorization: key },
+    });
+    const data = await pexelsRes.json().catch(() => ({}));
+    if (!pexelsRes.ok) {
+      throw new Error(data?.error || `Erro ${pexelsRes.status} na API do Pexels`);
+    }
+
+    const videos = (data.videos || []).map((v) => {
+      const bestFile =
+        v.video_files?.find((f) => f.quality === "hd" && (orientation === "portrait" ? f.height > f.width : f.width > f.height)) ||
+        v.video_files?.find((f) => f.quality === "hd") ||
+        v.video_files?.[0];
+      return {
+        id: v.id,
+        width: v.width,
+        height: v.height,
+        duration: v.duration,
+        image: v.image,
+        user: v.user,
+        url: v.url,
+        videoUrl: bestFile?.link,
+      };
+    });
+
+    res.json({ needsKey: false, videos, total_results: data.total_results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/pexels/download", async (req, res) => {
+  try {
+    const { videoUrl, id, name } = req.body ?? {};
+    if (!videoUrl) return res.status(400).json({ error: "URL do vídeo não fornecida." });
+
+    const safe = safeName(name || `pexels-${id || Date.now()}`).slice(0, 30);
+    const originalFile = `${Date.now().toString(36)}-pexels-${safe}.mp4`;
+    const targetOriginal = path.join(originalsDir, originalFile);
+    const targetMedia = path.join(mediaDir, originalFile);
+
+    const streamRes = await fetch(videoUrl);
+    if (!streamRes.ok) throw new Error(`Falha ao transferir vídeo do Pexels (${streamRes.status})`);
+    const arrayBuffer = await streamRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    fs.writeFileSync(targetOriginal, buffer);
+    fs.copyFileSync(targetOriginal, targetMedia);
+
+    let info = { duration: 10, width: 1080, height: 1920 };
+    try {
+      info = await probe(targetMedia);
+    } catch {
+      /* fallback */
+    }
+
+    res.json({
+      file: originalFile,
+      name: `Pexels - ${name || id}`,
+      duration: info.duration || 10,
+      width: info.width || 1080,
+      height: info.height || 1920,
+      kind: "video",
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------- Sugestões de B-Roll por IA ----------
+
+app.post("/api/broll/suggest", async (req, res) => {
+  try {
+    const { words, title } = req.body ?? {};
+    const suggestions = await suggestBrolls({ config: config.get(), words, title });
+    res.json({ suggestions });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------- Extrator de Melhores Momentos (Opus Clip Local) ----------
+
+app.post("/api/ai/highlights", async (req, res) => {
+  try {
+    const { words, title } = req.body ?? {};
+    const highlights = await extractHighlights({ config: config.get(), words, title });
+    res.json({ highlights });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------- Gerador de Copy & SEO para Redes Sociais ----------
+
+app.post("/api/ai/copy", async (req, res) => {
+  try {
+    const { words, title, tone } = req.body ?? {};
+    const copy = await generateSocialCopy({ config: config.get(), words, title, tone });
+    res.json(copy);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

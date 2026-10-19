@@ -563,3 +563,217 @@ export const generateImage = async ({ config, prompt, aspect = "landscape", tran
   const dims = imageDimensions(out.buffer) ?? { width: 1024, height: 1024 };
   return { ...out, ...dims, ext: EXT[out.mimeType] ?? "png", provider: which };
 };
+
+// ---------- Unified AI JSON (Claude / Gemini) ----------
+
+export const askGeminiJson = async ({ config, system, user, schema }) => {
+  if (!config.geminiKey) throw new Error("Chave da API do Gemini não configurada.");
+  const model = "gemini-2.5-flash";
+  const headers = { "Content-Type": "application/json", "x-goog-api-key": config.geminiKey };
+  const promptText = `${system}\n\n${user}\n\nFORMATO DE SAÍDA OBRIGATÓRIO: Responda estritamente com um JSON válido conforme o esquema:\n${JSON.stringify(schema)}`;
+
+  let res = await fetch(`${GEMINI_BASE}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: promptText }] }],
+      generationConfig: { responseMimeType: "application/json" },
+    }),
+  });
+  let json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const fallbackRes = await fetch(`${GEMINI_BASE}/v1beta/models/gemini-1.5-flash:generateContent`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: promptText }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
+    json = await fallbackRes.json().catch(() => ({}));
+    if (!fallbackRes.ok) throw geminiError(fallbackRes.status, json);
+  }
+  const text = geminiText(json);
+  if (!text) throw new Error("O Gemini não retornou texto.");
+  try {
+    return JSON.parse(text);
+  } catch {
+    const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+    return JSON.parse(clean);
+  }
+};
+
+export const askAiJson = async ({ config, system, user, schema, maxTokens = 8000, effort = "low" }) => {
+  if (config.promptProvider === "claude-code" || config.anthropicKey) {
+    try {
+      return await askJson({ config, system, user, schema, maxTokens, effort });
+    } catch (e) {
+      if (config.geminiKey) {
+        console.warn("Claude indisponível, usando Gemini:", e.message);
+        return await askGeminiJson({ config, system, user, schema });
+      }
+      throw e;
+    }
+  }
+  if (config.geminiKey) {
+    return await askGeminiJson({ config, system, user, schema });
+  }
+  throw Object.assign(
+    new Error("Configure o acesso ao Claude ou a chave da API do Gemini em Configurações para utilizar este recurso de IA."),
+    { status: 400 }
+  );
+};
+
+// ---------- Extrator de Melhores Momentos (Opus Clip Local) ----------
+
+const HIGHLIGHTS_SCHEMA = {
+  type: "object",
+  properties: {
+    highlights: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          title: { type: "string", description: "Título magnético estilo TikTok/Reels com alto CTR" },
+          score: { type: "integer", description: "Score de viralidade estimado de 0 a 100" },
+          hook: { type: "string", description: "Explicação em 1 frase de por que este momento gera retenção" },
+          start: { type: "number", description: "Timestamp de início em segundos" },
+          end: { type: "number", description: "Timestamp de fim em segundos" },
+          summary: { type: "string", description: "Resumo do que é falado neste trecho" },
+        },
+        required: ["id", "title", "score", "hook", "start", "end", "summary"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["highlights"],
+  additionalProperties: false,
+};
+
+const HIGHLIGHTS_SYSTEM = `Você é um especialista mundial em edição de vídeos curtos virais (estilo Opus Clip, Alex Hormozi e MrBeast).
+Sua missão é analisar a transcrição com timestamps de um vídeo e identificar os 3 a 5 MELHORES MOMENTOS para transformar em Shorts / Reels / TikToks autossuficientes.
+
+CRITÉRIOS DE SELEÇÃO:
+1. Gancho forte nos primeiros 3 segundos do trecho (pergunta instigante, revelação chocante, contradição, conselho direto).
+2. O trecho DEVE ter sentido completo e coerência (início, meio e conclusão ou punchline).
+3. Duração ideal entre 20 e 60 segundos por momento.
+4. Timestamps precisos: 'start' no início exato da primeira palavra do gancho e 'end' no fim da fala conclusiva.
+5. Score de viralidade (0 a 100) baseado no potencial de retenção e compartilhamento.`;
+
+export const extractHighlights = async ({ config, words = [], title = "" }) => {
+  if (!words.length) throw new Error("A transcrição do vídeo é necessária para extrair os melhores momentos.");
+  const transcriptLines = [];
+  let line = [];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    line.push(w.text);
+    if (line.length >= 10 || i === words.length - 1) {
+      const first = words[i - line.length + 1];
+      transcriptLines.push(`[${first.start.toFixed(1)}s - ${w.end.toFixed(1)}s] ${line.join(" ")}`);
+      line = [];
+    }
+  }
+  const user = `TÍTULO DO VÍDEO: ${title || "Vídeo sem título"}\n\nTRANSCRIÇÃO COM TIMESTAMPS:\n${transcriptLines.join("\n")}`;
+  const res = await askAiJson({ config, system: HIGHLIGHTS_SYSTEM, user, schema: HIGHLIGHTS_SCHEMA });
+  return res.highlights || [];
+};
+
+// ---------- Gerador de Copy & SEO para Redes Sociais ----------
+
+const SOCIAL_COPY_SCHEMA = {
+  type: "object",
+  properties: {
+    tiktok: {
+      type: "object",
+      properties: {
+        hook: { type: "string", description: "Frase de impacto de 3 segundos para sobrepor na tela" },
+        caption: { type: "string", description: "Legenda curta, persuasiva e direta" },
+        hashtags: { type: "array", items: { type: "string" }, description: "5 a 8 hashtags virais e do nicho" },
+      },
+      required: ["hook", "caption", "hashtags"],
+      additionalProperties: false,
+    },
+    instagram: {
+      type: "object",
+      properties: {
+        hook: { type: "string", description: "Linha 1 do post para prender o scroll no feed" },
+        caption: { type: "string", description: "Texto completo com quebras de linha e boa legibilidade" },
+        cta: { type: "string", description: "Chamada para ação clara (salvar, comentar, seguir)" },
+        hashtags: { type: "array", items: { type: "string" }, description: "Hashtags segmentadas" },
+      },
+      required: ["hook", "caption", "cta", "hashtags"],
+      additionalProperties: false,
+    },
+    youtube: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Título irresistível com alto CTR (menos de 70 caracteres)" },
+        description: { type: "string", description: "Descrição otimizada para SEO e busca do YouTube" },
+        tags: { type: "array", items: { type: "string" }, description: "Lista de tags de busca do YouTube" },
+      },
+      required: ["title", "description", "tags"],
+      additionalProperties: false,
+    },
+  },
+  required: ["tiktok", "instagram", "youtube"],
+  additionalProperties: false,
+};
+
+const SOCIAL_COPY_SYSTEM = `Você é um copywriter sênior especialista em distribuição e viralização de vídeos para TikTok, Instagram Reels e YouTube Shorts.
+Com base no tema ou na transcrição do vídeo, você gera posts e copys altamente magnéticas e otimizadas para o algoritmo de cada plataforma.
+Escreva de forma persuasiva, com ganchos fortes e excelente formatação.`;
+
+export const generateSocialCopy = async ({ config, words = [], title = "", tone = "viral" }) => {
+  const textSummary = words.length ? words.map((w) => w.text).join(" ").slice(0, 4000) : title;
+  if (!textSummary) throw new Error("Forneça a transcrição ou o título do projeto para gerar as copys.");
+  const user = `TÍTULO: ${title}\nTOM DE VOZ: ${tone}\n\nCONTEÚDO/TRANSCRIÇÃO:\n${textSummary}`;
+  return await askAiJson({ config, system: SOCIAL_COPY_SYSTEM, user, schema: SOCIAL_COPY_SCHEMA });
+};
+
+// ---------- Sugestões de B-Roll da Transcrição ----------
+
+const BROLL_SUGGEST_SCHEMA = {
+  type: "object",
+  properties: {
+    suggestions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          keyword: { type: "string", description: "Palavra-chave visual em português" },
+          englishKeyword: { type: "string", description: "Termo de busca em inglês para o Pexels" },
+          start: { type: "number", description: "Timestamp inicial sugerido em segundos" },
+          end: { type: "number", description: "Timestamp final sugerido em segundos" },
+          reason: { type: "string", description: "Justificativa da cena" },
+        },
+        required: ["keyword", "englishKeyword", "start", "end", "reason"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["suggestions"],
+  additionalProperties: false,
+};
+
+const BROLL_SUGGEST_SYSTEM = `Você é um diretor de arte e editor de retenção visual para YouTube Shorts e TikTok.
+Analise a transcrição com timestamps e sugira de 3 a 6 inserções estratégicas de B-Roll (vídeos de apoio) para ilustrar os conceitos falados e dinamizar o vídeo.
+Forneça a palavra-chave em português e o termo em inglês mais eficaz para encontrar clipes relevantes no Pexels.`;
+
+export const suggestBrolls = async ({ config, words = [], title = "" }) => {
+  if (!words.length) throw new Error("A transcrição do vídeo é necessária para sugerir B-Rolls.");
+  const transcriptLines = [];
+  let line = [];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    line.push(w.text);
+    if (line.length >= 10 || i === words.length - 1) {
+      const first = words[i - line.length + 1];
+      transcriptLines.push(`[${first.start.toFixed(1)}s - ${w.end.toFixed(1)}s] ${line.join(" ")}`);
+      line = [];
+    }
+  }
+  const user = `TÍTULO: ${title}\n\nTRANSCRIÇÃO COM TIMESTAMPS:\n${transcriptLines.join("\n")}`;
+  const res = await askAiJson({ config, system: BROLL_SUGGEST_SYSTEM, user, schema: BROLL_SUGGEST_SCHEMA });
+  return res.suggestions || [];
+};

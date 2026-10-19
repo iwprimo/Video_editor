@@ -11,6 +11,7 @@ import {
   XCircle,
   Download,
   X,
+  Share2,
 } from "lucide-react";
 import { EXPORT_PLATFORMS, ExportPlatform, ExportQuality, FORMATS, FormatId, Project } from "../remotion/types";
 
@@ -19,12 +20,13 @@ type Props = {
   onClose: () => void;
   project: Project;
   onAdjustFormat?: (format: FormatId) => void;
+  onOpenSocialCopy?: () => void;
   flash?: (msg: string) => void;
 };
 
 type RenderStatus = "idle" | "running" | "done" | "error";
 
-export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustFormat, flash }) => {
+export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustFormat, flash, onOpenSocialCopy }) => {
   const [platform, setPlatform] = useState<ExportPlatform>(
     project.format === "portrait" ? "reels" : project.format === "square" ? "feed" : "landscape",
   );
@@ -249,6 +251,20 @@ export const ExportModal: React.FC<Props> = ({ open, onClose, project, onAdjustF
                   <Download size={15} style={{ marginRight: 6 }} />
                   Baixar MP4
                 </a>
+                {onOpenSocialCopy && (
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      onClose();
+                      onOpenSocialCopy();
+                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Share2 size={15} />
+                    Gerar Copy & Hashtags
+                  </button>
+                )}
                 <button type="button" className="btn ghost" onClick={onClose}>
                   Fechar
                 </button>
