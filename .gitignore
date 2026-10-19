@@ -1,0 +1,11 @@
+node_modules
+exportados/*
+!exportados/.gitkeep
+dist
+config.json
+midia/*
+!midia/.gitkeep
+whisper/
+*.bin
+*.log
+.DS_Store
