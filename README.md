@@ -84,8 +84,8 @@ Developed and maintained by **iwprimo** ([iwprimo@gmail.com](mailto:iwprimo@gmai
 
 ```bash
 # Clone the repository
-git clone https://github.com/iwprimo/editor-video.git
-cd editor-video
+git clone https://github.com/iwprimo/Video_editor.git
+cd Video_editor
 
 # Install dependencies
 npm install

@@ -36,8 +36,8 @@ When contributing code, please strictly adhere to the following rules:
 
 1. **Fork and Clone the Repository:**
    ```bash
-   git clone https://github.com/iwprimo/editor-video.git
-   cd editor-video
+   git clone https://github.com/iwprimo/Video_editor.git
+   cd Video_editor
    ```
 
 2. **Install Dependencies:**
