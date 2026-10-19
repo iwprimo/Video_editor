@@ -44,6 +44,26 @@ Developed and maintained by **iwprimo** ([iwprimo@gmail.com](mailto:iwprimo@gmai
   - **Intelligent Auto-Ducking:** Automatically lowers background music volume during speech segments.
   - **Brand Kit System:** One-click application of creator presets (Hormozi, MrBeast, Minimalist, Cyberpunk, Aesthetic) and custom brand kits.
 
+- **Split Screen 50/50 & Retention Layouts:**
+  - Dual-video composition (speaker on top / satisfying b-roll or gameplay on bottom, or reversed).
+  - Customizable ratios (50/50, 65/35, 35/65), secondary video Pan X/Y sliders, zoom, dedicated secondary volume, and stylish neon accent divider.
+
+- **Animated Retention Stickers Library (100% Native SVG):**
+  - High-engagement viral stickers: Bouncing Arrows (down, right, curved), Pulsing Focus Ring, Alert Warning, Subscribe/Follow Bell Pill, Verified Checkmark, Trending Flame, and Tap Gesture.
+  - Procedural physics animations (bounce, pulse, ripple) synchronized with procedural SFX audio (pop, whoosh, ding, tap).
+
+- **Auto B-Roll Integration (Pexels API):**
+  - Integrated search and direct download of high-resolution royalty-free video clips from Pexels with vertical (9:16) and horizontal (16:9) filters.
+  - **Auto B-Roll (AI Speech Suggestions):** Analyzes transcript to detect key visual moments and recommends matching b-roll clips with 1-click timeline insertion.
+
+- **Local AI Highlights Extractor (Opus Clip Local):**
+  - Analyzes speech transcripts using Claude or Google Gemini to detect the 3-5 best viral moments (20s to 60s).
+  - Virality score (0-100), hook strength evaluation, instant audio preview, and 1-click Short creation with captions enabled.
+
+- **Social Copy & SEO Generator:**
+  - Generates algorithm-optimized posts for TikTok, Instagram Reels, and YouTube Shorts from video speech.
+  - High-CTR hooks, persuasive captions, and segmented niche hashtags with 1-click clipboard copy.
+
 - **Clean UI & Modern SVG Icons:**
   - Strictly zero-emoji UI policy: all buttons, controls, and dialogs use clean, lightweight Lucide SVG icons.
 
