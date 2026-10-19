@@ -98,13 +98,21 @@ A **Fase A** transforma o editor em uma estação de trabalho de alta precisão 
    - Animações procedurais (bounce, pulse, ripple) com áudio procedural sincronizado (pop, whoosh, ding, tap).
    - Aba dedicada na Biblioteca de Ilustrações e painel completo no Inspetor de Overlays.
 
-#### Fase C: Automação & Crescimento
+#### Fase C: Automação & Crescimento [CONCLUÍDA & ENTREGUE]
 1. **Auto B-Roll Integrado (Pexels API):**
-   - Detecção de palavras-chave na fala com sugestão automática de vídeos de apoio gratuitos.
+   - Integração completa com o catálogo mundial da Pexels para busca e download de vídeos gratuitos em alta resolução.
+   - Filtros de orientação vertical 9:16 e horizontal 16:9, chips de busca rápida ("cidade", "tecnologia", "dinheiro", "natureza", "pessoas", "café").
+   - Detecção inteligente de conceitos na fala com o botão **Auto B-Roll (Sugestões de Fala)** via IA, sugerindo termos precisos em português e inglês para busca e inserção direta na timeline.
+   - Gerenciamento de chave de API em Configurações com fallback demonstrativo imediato.
 2. **Extrator de Melhores Momentos (Opus Clip Local):**
-   - Análise de transcrição por IA para gerar 3 a 5 shorts cortados de vídeos longos.
+   - Modal acessível diretamente no cabeçalho com pontuação de viralidade (0 a 100), títulos magnéticos, análise de gancho e timestamps precisos.
+   - Ações imediatas: pré-visualização no reprodutor, isolamento do segmento em um Short com legendas ativadas ou criação de nova cena duplicada na timeline.
+   - Suporte híbrido e resiliente a modelos de IA (Claude Sonnet / Claude Code ou Google Gemini Flash).
 3. **Gerador de Copy & SEO para Redes Sociais:**
-   - Criação de texto de postagem e hashtags virais para TikTok, Instagram e YouTube.
+   - Ferramenta nativa para transformar a transcrição do vídeo em posts de alta conversão.
+   - Ganchos de tela, legendas persuasivas e hashtags segmentadas para **TikTok**, **Instagram Reels** e **YouTube Shorts**.
+   - Seletor de tom de voz (Viral, Educativo, Storytelling, Descontraído) e botões de cópia com 1 clique (seção ou post completo).
+   - Acesso pelo cabeçalho do editor e na tela de conclusão de exportação de vídeo.
 
 ---
 
