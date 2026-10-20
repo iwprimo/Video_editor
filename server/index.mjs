@@ -60,9 +60,12 @@ app.get("/api/jobs/:id", (req, res) => {
 });
 
 const mediaPath = (file) => {
-  const p = path.join(mediaDir, path.basename(String(file ?? "")));
-  if (!fs.existsSync(p)) throw Object.assign(new Error("Arquivo de mídia não encontrado"), { status: 404 });
-  return p;
+  const base = path.basename(String(file ?? ""));
+  const p = path.join(mediaDir, base);
+  if (fs.existsSync(p)) return p;
+  const inOrig = path.join(originalsDir, base);
+  if (fs.existsSync(inOrig)) return inOrig;
+  throw Object.assign(new Error(`Arquivo de mídia não encontrado: ${base}`), { status: 404 });
 };
 
 // ---------- Configurações ----------

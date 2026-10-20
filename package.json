@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n editor,render -c cyan,magenta \"vite\" \"node server/index.mjs\"",
+    "dev": "concurrently -k -n editor,render -c cyan,magenta \"vite\" \"node --watch server/index.mjs\"",
     "build": "vite build",
     "studio": "remotion studio src/remotion/index.ts",
     "typecheck": "tsc --noEmit",
