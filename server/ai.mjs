@@ -568,39 +568,54 @@ export const generateImage = async ({ config, prompt, aspect = "landscape", tran
 
 export const askGeminiJson = async ({ config, system, user, schema }) => {
   if (!config.geminiKey) throw new Error("Chave da API do Gemini não configurada.");
-  const model = "gemini-2.5-flash";
+  const candidateModels = [
+    config.geminiJsonModel,
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-flash-lite-latest",
+  ].filter(Boolean);
+  const models = [...new Set(candidateModels)];
   const headers = { "Content-Type": "application/json", "x-goog-api-key": config.geminiKey };
   const promptText = `${system}\n\n${user}\n\nFORMATO DE SAÍDA OBRIGATÓRIO: Responda estritamente com um JSON válido conforme o esquema:\n${JSON.stringify(schema)}`;
 
-  let res = await fetch(`${GEMINI_BASE}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: promptText }] }],
-      generationConfig: { responseMimeType: "application/json" },
-    }),
-  });
-  let json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const fallbackRes = await fetch(`${GEMINI_BASE}/v1beta/models/gemini-1.5-flash:generateContent`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: promptText }] }],
-        generationConfig: { responseMimeType: "application/json" },
-      }),
-    });
-    json = await fallbackRes.json().catch(() => ({}));
-    if (!fallbackRes.ok) throw geminiError(fallbackRes.status, json);
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      const res = await fetch(`${GEMINI_BASE}/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers,
+        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: promptText }] }],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        lastError = geminiError(res.status, json);
+        console.warn(`[Gemini JSON] Falha com modelo ${model} (${res.status}): ${lastError.message}. Tentando próximo modelo...`);
+        continue;
+      }
+      const text = geminiText(json);
+      if (!text) {
+        lastError = new Error(`O modelo ${model} não retornou texto.`);
+        continue;
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+        return JSON.parse(clean);
+      }
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Gemini JSON] Erro com modelo ${model}: ${err.message}. Tentando próximo modelo...`);
+    }
   }
-  const text = geminiText(json);
-  if (!text) throw new Error("O Gemini não retornou texto.");
-  try {
-    return JSON.parse(text);
-  } catch {
-    const clean = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
-    return JSON.parse(clean);
-  }
+
+  throw lastError || new Error("Falha ao comunicar com os modelos do Gemini.");
 };
 
 export const askAiJson = async ({ config, system, user, schema, maxTokens = 8000, effort = "low" }) => {
