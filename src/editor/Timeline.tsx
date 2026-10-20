@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FX_MIME, FxPayload } from "./EffectsLibrary";
 import { OVERLAY_MIME, OverlayPayload } from "./IllustrationsLibrary";
+import { WaveformBlock } from "./WaveformBlock";
 import {
   FPS,
   OVERLAYS,
@@ -16,6 +17,8 @@ import {
   SCENE_LABELS,
   Scene,
   SceneType,
+  VideoScene,
+  withVideoDuration,
   totalFrames,
 } from "../remotion/types";
 
@@ -190,27 +193,70 @@ export const Timeline: React.FC<Props> = (p) => {
     window.addEventListener("pointerup", up);
   };
 
-  const startResize = (e: React.PointerEvent, index: number) => {
+  const startTrim = (e: React.PointerEvent, index: number, edge: "left" | "right") => {
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     const base = project;
+    const target = base.scenes[index];
+    if (!target) return;
     const startX = e.clientX;
-    const startDur = base.scenes[index].duration;
-    p.onSelect(base.scenes[index].id);
+    const startDur = target.duration;
+    p.onSelect(target.id);
+
+    const isVideo = target.type === "video" && Array.isArray(target.segments) && target.segments.length > 0;
+    const videoSegs = isVideo ? (target as VideoScene).segments : [];
+    const initialStart = videoSegs[0]?.start ?? 0;
+    const initialEnd = videoSegs[videoSegs.length - 1]?.end ?? ((target as VideoScene).srcDuration || startDur / FPS);
+
     const move = (ev: PointerEvent) => {
-      const raw = startDur + (ev.clientX - startX) / ppf;
+      const rawFrames = (ev.clientX - startX) / ppf;
       const snap = ev.altKey ? 1 : SNAP;
-      const dur = Math.max(MIN_SCENE_FRAMES, Math.min(MAX_SCENE_FRAMES, Math.round(raw / snap) * snap));
-      if (dur === base.scenes[index].duration && ev.type !== "pointermove") return;
-      const scenes = base.scenes.map((s, i) => (i === index ? { ...s, duration: dur } : s));
+      const deltaFrames = Math.round(rawFrames / snap) * snap;
+      const deltaSec = deltaFrames / FPS;
+
+      let nextScene: Scene;
+
+      if (isVideo) {
+        const vTarget = target as VideoScene;
+        if (edge === "left") {
+          // Trimming início: arrastar para a esquerda (delta negativo) recupera vídeo/fala anterior do arquivo original
+          // arrastar para a direita (delta positivo) apara o início
+          const maxStart = videoSegs[0].end - 0.1;
+          const newStart = Math.max(0, Math.min(maxStart, Math.round((initialStart + deltaSec) * 1000) / 1000));
+          const nextSegs = videoSegs.map((s, idx) => (idx === 0 ? { ...s, start: newStart } : s));
+          nextScene = withVideoDuration({ ...vTarget, segments: nextSegs });
+        } else {
+          // Trimming final: arrastar para a direita (delta positivo) expande o final recuperando material
+          // arrastar para a esquerda (delta negativo) apara o final
+          const lastIdx = videoSegs.length - 1;
+          const minEnd = videoSegs[lastIdx].start + 0.1;
+          const maxEnd = vTarget.srcDuration > 0 ? vTarget.srcDuration : 86400;
+          const newEnd = Math.max(minEnd, Math.min(maxEnd, Math.round((initialEnd + deltaSec) * 1000) / 1000));
+          const nextSegs = videoSegs.map((s, idx) => (idx === lastIdx ? { ...s, end: newEnd } : s));
+          nextScene = withVideoDuration({ ...vTarget, segments: nextSegs });
+        }
+      } else {
+        if (edge === "right") {
+          const dur = Math.max(MIN_SCENE_FRAMES, Math.min(MAX_SCENE_FRAMES, Math.round((startDur + deltaFrames) / snap) * snap));
+          nextScene = { ...target, duration: dur };
+        } else {
+          const dur = Math.max(MIN_SCENE_FRAMES, Math.min(MAX_SCENE_FRAMES, Math.round((startDur - deltaFrames) / snap) * snap));
+          nextScene = { ...target, duration: dur };
+        }
+      }
+
+      if (nextScene.duration === base.scenes[index].duration && ev.type !== "pointermove") return;
+      const scenes = base.scenes.map((s, i) => (i === index ? nextScene : s));
       p.onPreview({ ...base, scenes });
     };
+
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       p.onCommitFrom(base);
     };
+
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   };
@@ -423,22 +469,34 @@ export const Timeline: React.FC<Props> = (p) => {
                     e.preventDefault();
                     p.onDropFx(s.id, JSON.parse(raw) as FxPayload);
                   }}
-                  title="Clique para selecionar · arraste para reordenar · solte um efeito aqui"
+                  title="Clique para selecionar · arraste para reordenar · puxe as bordas para esticar ou aparar cortes"
                 >
+                  {s.type === "video" ? (
+                    <WaveformBlock
+                      scene={s}
+                      mediaBase={project.mediaBase ?? ""}
+                      width={Math.max(8, visible * ppf - 4)}
+                      height={24}
+                    />
+                  ) : null}
                   <span className="block-type">
                     {SCENE_LABELS[s.type]}
                     {fxCount ? <span className="fx-badge" title={`${fxCount} efeito(s)`}>fx {fxCount}</span> : null}
                   </span>
                   <span className="block-text">{sceneSummary(s)}</span>
                   <span className="block-dur">{(s.duration / FPS).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s</span>
-                  {s.type !== "video" ? (
-                    <span
-                      className="handle"
-                      onPointerDown={(e) => startResize(e, i)}
-                      title="Arraste para mudar a duração (Alt = ajuste fino)"
-                      aria-label="Redimensionar cena"
-                    />
-                  ) : null}
+                  <span
+                    className="handle handle-left"
+                    onPointerDown={(e) => startTrim(e, i, "left")}
+                    title={s.type === "video" ? "Arraste para recuperar ou aparar o início do corte (Alt = fino)" : "Arraste para ajustar o início (Alt = fino)"}
+                    aria-label="Ajustar início da cena"
+                  />
+                  <span
+                    className="handle handle-right"
+                    onPointerDown={(e) => startTrim(e, i, "right")}
+                    title={s.type === "video" ? "Arraste para esticar ou aparar o término do corte (Alt = fino)" : "Arraste para mudar a duração (Alt = fino)"}
+                    aria-label="Ajustar término da cena"
+                  />
                 </div>
               );
             })}

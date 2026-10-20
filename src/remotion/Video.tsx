@@ -3,6 +3,7 @@ import {
   AbsoluteFill,
   Easing,
   OffthreadVideo,
+  Video as RemotionVideo,
   getRemotionEnvironment,
   Sequence,
   continueRender,
@@ -366,6 +367,9 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
   const punchPattern = s.punchInPattern ?? "none";
   const punchZoom = s.punchInZoom ?? 1.2;
 
+  const isPlayer = getRemotionEnvironment().isPlayer;
+  const VideoComp = isPlayer ? RemotionVideo : OffthreadVideo;
+
   // --- Split Screen 50/50 (Fase B) ---
   const isSplit = !!s.splitScreen?.enabled;
   const splitRatio = s.splitScreen?.splitRatio ?? 0.5;
@@ -406,7 +410,7 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
           <Sequence key={`${i}-${seg.start}`} from={startAt} durationInFrames={len} premountFor={FPS} name={`trecho ${i + 1}`}>
             {/* Camada de fundo desfocado (quando bgMode === 'blur') */}
             {effectiveBgMode === "blur" ? (
-              <OffthreadVideo
+              <VideoComp
                 src={src}
                 trimBefore={Math.round(seg.start * FPS)}
                 volume={() => 0}
@@ -437,10 +441,10 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
                 transformOrigin: "center center",
               }}
             >
-              <OffthreadVideo
+              <VideoComp
                 src={src}
                 trimBefore={Math.round(seg.start * FPS)}
-                volume={(f) => (len > 8 ? vol * interpolate(f, [0, 3, len - 3, len], [0, 1, 1, 0], clamp) : vol)}
+                volume={(f) => (len > 4 ? vol * interpolate(f, [0, 1, len - 1, len], [0, 1, 1, 0], clamp) : vol)}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -470,7 +474,7 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
           transformOrigin: "center center",
         }}
       >
-        <OffthreadVideo
+        <VideoComp
           src={secondarySrc}
           volume={secondaryVolume}
           style={{
@@ -631,7 +635,7 @@ export const Video: React.FC<Project> = (raw) => {
           {scenes.flatMap((scene, i) => {
             const t = transitionFrames(scenes, i);
             const items = [
-              <TransitionSeries.Sequence key={scene.id} durationInFrames={scene.duration} name={scene.type}>
+              <TransitionSeries.Sequence key={scene.id} durationInFrames={scene.duration} premountFor={FPS} name={scene.type}>
                 <ExitContext.Provider value={t === 0}>
                   <EffectsLayer
                     effects={scene.effects ?? []}

@@ -351,7 +351,7 @@ export const App: React.FC = () => {
           segs1.push({ ...seg });
           accumulated += len;
         } else if (accumulated < splitLocalSeconds) {
-          const cutPoint = seg.start + (splitLocalSeconds - accumulated);
+          const cutPoint = Math.round((seg.start + (splitLocalSeconds - accumulated)) * FPS) / FPS;
           segs1.push({ ...seg, end: cutPoint });
           segs2.push({ ...seg, start: cutPoint });
           accumulated = splitLocalSeconds;

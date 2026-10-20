@@ -223,9 +223,9 @@ select.input { padding-right: 6px; }
 .tick { position: absolute; bottom: 0; width: 1px; height: 6px; background: var(--line-strong); }
 .tick.major { height: 10px; background: var(--faint); }
 .tick em { position: absolute; bottom: 12px; left: 4px; font-style: normal; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-.track { position: relative; height: 98px; cursor: ew-resize; }
+.track { position: relative; height: 104px; cursor: ew-resize; }
 .block {
-  position: absolute; top: 8px; height: 66px; padding: 7px 14px 7px 12px;
+  position: absolute; top: 8px; height: 72px; padding: 7px 14px 7px 12px;
   display: flex; flex-direction: column; gap: 2px;
   background: color-mix(in srgb, var(--c) 14%, var(--panel));
   border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
@@ -240,13 +240,19 @@ select.input { padding-right: 6px; }
 .block-text { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .block-dur { position: absolute; top: 7px; right: 14px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .block-type { padding-right: 44px; }
-.handle { position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: ew-resize; }
+.handle { position: absolute; top: 0; width: 12px; height: 100%; cursor: ew-resize; z-index: 6; }
+.handle-left { left: 0; }
+.handle-right { right: 0; }
 .handle::after {
-  content: ""; position: absolute; top: 50%; right: 3px; width: 3px; height: 28px; margin-top: -14px; border-radius: 2px;
-  background: var(--c); opacity: 0.45; transition: opacity 150ms var(--ease);
+  content: ""; position: absolute; top: 50%; width: 3px; height: 32px; margin-top: -16px; border-radius: 2px;
+  background: var(--c); opacity: 0.35; transition: opacity 150ms var(--ease), background 150ms var(--ease);
 }
-.block:hover .handle::after, .handle:hover::after { opacity: 1; }
-.drop { position: absolute; top: 4px; width: 3px; height: 74px; border-radius: 2px; background: var(--ink); pointer-events: none; }
+.handle-left::after { left: 2px; }
+.handle-right::after { right: 2px; }
+.block:hover .handle::after, .handle:hover::after { opacity: 0.95; }
+.handle:hover::after { background: var(--ink); }
+.block-waveform { position: absolute; left: 0; bottom: 0; width: 100%; pointer-events: none; opacity: 0.85; }
+.drop { position: absolute; top: 4px; width: 3px; height: 80px; border-radius: 2px; background: var(--ink); pointer-events: none; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); cursor: ew-resize; z-index: 15; }
 .playhead::before {
   content: ""; position: absolute; top: 0; left: -5px; width: 12px; height: 12px;
