@@ -643,8 +643,8 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
               </div>
             ) : (
               <button
-                className="btn primary block"
-                style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}
+                className="btn primary wide"
+                style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}
                 onClick={removeBackground}
                 disabled={busy}
               >
