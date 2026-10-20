@@ -4,6 +4,7 @@ import express from "express";
 import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition, ensureBrowser } from "@remotion/renderer";
@@ -219,6 +220,78 @@ app.post("/api/transcript/fix", (req, res) => {
   })
     .then((chunks) => Object.assign(job, { status: "done", progress: 1, stage: "Pronto", result: { chunks } }))
     .catch((e) => fail(job, e));
+});
+
+// ---------- Remoção de Fundo com IA & Canal Alfa ----------
+
+app.post("/api/remove-bg", (req, res) => {
+  let input;
+  try {
+    input = mediaPath(req.body?.file);
+  } catch (e) {
+    return res.status(404).json({ error: e.message });
+  }
+
+  const base = path.basename(input).replace(/\.[^.]+$/, "");
+  const maskFile = `${base}-mask.mp4`;
+  const webmFile = `${base}-alpha.webm`;
+  const maskPath = path.join(mediaDir, maskFile);
+  const webmPath = path.join(mediaDir, webmFile);
+
+  const [id, job] = newJob("Iniciando IA de remoção de fundo");
+  res.json({ jobId: id });
+
+  const py = spawn("python", [
+    path.join(root, "server", "remove_bg.py"),
+    "--input", input,
+    "--output-mask", maskPath,
+    "--output-webm", webmPath,
+    "--model", path.join(root, "server", "models", "rvm_mobilenetv3_fp32.onnx"),
+  ]);
+
+  let resultPayload = null;
+
+  py.stdout.on("data", (data) => {
+    const lines = String(data).split("\n");
+    for (const line of lines) {
+      const clean = line.trim();
+      if (clean.startsWith("PROGRESS:")) {
+        try {
+          const info = JSON.parse(clean.slice(9));
+          job.progress = info.progress;
+          job.stage = info.stage;
+        } catch {}
+      } else if (clean.startsWith("DONE:")) {
+        try {
+          const resObj = JSON.parse(clean.slice(5));
+          resultPayload = {
+            maskFile: resObj.mask,
+            transparentFile: resObj.webm,
+          };
+        } catch {}
+      }
+    }
+  });
+
+  py.stderr.on("data", (data) => {
+    console.error("[remove_bg py]", String(data));
+  });
+
+  py.on("close", (code) => {
+    if (code !== 0 && !resultPayload) {
+      fail(job, new Error(`O processo de IA falhou com código ${code}`));
+    } else {
+      Object.assign(job, {
+        status: "done",
+        progress: 1,
+        stage: "Recorte concluído com sucesso!",
+        result: resultPayload || {
+          maskFile,
+          transparentFile: webmFile,
+        },
+      });
+    }
+  });
 });
 
 // ---------- Edição por prompt ----------

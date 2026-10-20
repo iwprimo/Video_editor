@@ -6,7 +6,10 @@ config.json
 midia/*
 !midia/.gitkeep
 whisper/
+server/models/*
+!server/models/.gitkeep
 *.bin
+*.onnx
 *.log
 .DS_Store
 

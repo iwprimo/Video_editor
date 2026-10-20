@@ -183,6 +183,45 @@ export type VideoScene = SceneBase & {
   punchInZoom?: number; // 1.1..1.4 (padrão 1.2)
   // --- Tela Dividida / Split Screen 50/50 (Fase B) ---
   splitScreen?: SplitScreenConfig;
+  // --- Remoção de Fundo & Cenário Virtual (IA) ---
+  bgRemoval?: BgRemovalConfig;
+};
+
+export type BackgroundPresetId =
+  | "podcast-studio"
+  | "modern-office"
+  | "neon-loft"
+  | "warm-bookshelf"
+  | "studio-gradient";
+
+export type BgRemovalConfig = {
+  enabled: boolean;
+  maskFile?: string;
+  transparentFile?: string; // arquivo webm com canal alfa
+  backgroundType: "preset" | "image" | "color" | "blur";
+  presetId?: BackgroundPresetId;
+  customAssetId?: string;
+  customFile?: string;
+  backgroundColor?: string;
+  blurBackground?: boolean;
+  blurAmount?: number; // 0..40px (padrão 14px)
+  sceneBrightness?: number; // 0.4..1.2 (padrão 0.85)
+  subjectScale?: number; // 0.8..1.5
+  subjectPanX?: number; // -40..40%
+  subjectPanY?: number; // -40..40%
+};
+
+export const DEFAULT_BG_REMOVAL: BgRemovalConfig = {
+  enabled: false,
+  backgroundType: "preset",
+  presetId: "podcast-studio",
+  backgroundColor: "#0f172a",
+  blurBackground: true,
+  blurAmount: 14,
+  sceneBrightness: 0.85,
+  subjectScale: 1.0,
+  subjectPanX: 0,
+  subjectPanY: 0,
 };
 
 export type SplitScreenConfig = {

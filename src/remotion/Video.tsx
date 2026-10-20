@@ -25,6 +25,7 @@ import { CaptionsLayer, OverlaysLayer } from "./overlays";
 import { HeadlineLayer } from "./HeadlineLayer";
 import { AudioLayer } from "./AudioLayer";
 import { CoverLayer } from "./CoverLayer";
+import { VirtualBackground } from "./VirtualBackground";
 import { FPS, normalizeProject, segFrames, transitionFrames, totalFrames } from "./types";
 import type { ChartScene, ImageAsset, OutroScene, Project, Scene, StatsScene, TextScene, Theme, TitleScene, VideoScene } from "./types";
 
@@ -391,9 +392,22 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
   const dividerColor = s.splitScreen?.dividerColor || (theme?.accent ?? "#ffd84d");
   const dividerWidth = s.splitScreen?.dividerWidth ?? 3;
 
+  // --- Remoção de Fundo & Cenário Virtual (IA) ---
+  const isBgRemoval = !!s.bgRemoval?.enabled;
+  const transparentSrc = s.bgRemoval?.transparentFile ? `${mediaBase}/media/${s.bgRemoval.transparentFile}` : null;
+  const effectiveSrc = isBgRemoval && transparentSrc ? transparentSrc : src;
+  const subjectPanX = isBgRemoval ? (s.bgRemoval?.subjectPanX ?? 0) : 0;
+  const subjectPanY = isBgRemoval ? (s.bgRemoval?.subjectPanY ?? 0) : 0;
+  const subjectScale = isBgRemoval ? (s.bgRemoval?.subjectScale ?? 1.0) : 1.0;
+
   let from = 0;
   const primaryContent = (
     <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
+      {/* Camada do Novo Cenário Virtual (quando bgRemoval está ativo) */}
+      {isBgRemoval && s.bgRemoval ? (
+        <VirtualBackground config={s.bgRemoval} assets={assets} mediaBase={mediaBase} />
+      ) : null}
+
       {s.segments.map((seg, i) => {
         const len = segFrames(seg);
         const startAt = from;
@@ -408,8 +422,8 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
         const effectiveScale = isPunchIn ? baseScale * punchZoom : baseScale;
         return (
           <Sequence key={`${i}-${seg.start}`} from={startAt} durationInFrames={len} premountFor={FPS} name={`trecho ${i + 1}`}>
-            {/* Camada de fundo desfocado (quando bgMode === 'blur') */}
-            {effectiveBgMode === "blur" ? (
+            {/* Camada de fundo desfocado (quando bgMode === 'blur' e bgRemoval não está ativo) */}
+            {effectiveBgMode === "blur" && !isBgRemoval ? (
               <VideoComp
                 src={src}
                 trimBefore={Math.round(seg.start * FPS)}
@@ -429,7 +443,7 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
               />
             ) : null}
 
-            {/* Vídeo principal com ajuste de enquadramento (pan / zoom / punch-in) */}
+            {/* Vídeo do apresentador / sujeito com suporte a transparência nativa */}
             <div
               style={{
                 position: "absolute",
@@ -437,18 +451,18 @@ const VideoView: React.FC<{ s: VideoScene; mediaBase: string; theme?: Theme; ass
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transform: `translate(${panX}%, ${panY}%) scale(${effectiveScale})`,
+                transform: `translate(${panX + subjectPanX}%, ${panY + subjectPanY}%) scale(${effectiveScale * subjectScale})`,
                 transformOrigin: "center center",
               }}
             >
               <VideoComp
-                src={src}
+                src={effectiveSrc}
                 trimBefore={Math.round(seg.start * FPS)}
                 volume={(f) => (len > 4 ? vol * interpolate(f, [0, 1, len - 1, len], [0, 1, 1, 0], clamp) : vol)}
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: effectiveBgMode === "cover" ? "cover" : "contain",
+                  objectFit: isBgRemoval ? "contain" : (effectiveBgMode === "cover" ? "cover" : "contain"),
                   visibility: failed ? "hidden" : undefined,
                 }}
                 onError={onError}

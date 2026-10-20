@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { Info, Rows2 } from "lucide-react";
+import { Info, RefreshCw, Rows2, Sparkles } from "lucide-react";
 import {
+  BackgroundPresetId,
   CAPTION_PRESETS,
+  DEFAULT_BG_REMOVAL,
   DEFAULT_CAPTIONS,
   DEFAULT_SPLIT_SCREEN,
   FPS,
@@ -40,6 +42,7 @@ const keptSeconds = (s: VideoScene) => s.segments.reduce((a, g) => a + segFrames
 
 export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScene, onProject, onSeekSource, flash, aiReady, onOpenSettings }) => {
   const [job, setJob] = useState<{ stage: string; progress: number } | null>(null);
+  const [bgJob, setBgJob] = useState<{ stage: string; progress: number } | null>(null);
   const [threshold, setThreshold] = useState(-35);
   const [minSilence, setMinSilence] = useState(0.6);
   const [padding, setPadding] = useState(0.15);
@@ -60,6 +63,31 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
 
   const setSegments = (segments: VideoScene["segments"]) =>
     onScene({ segments: normalizeSegments(segments, scene.srcDuration) } as Partial<Scene>);
+
+  const removeBackground = async () => {
+    setBgJob({ stage: "Enviando para IA...", progress: 0 });
+    try {
+      const { jobId } = await postJson<{ jobId: string }>("/api/remove-bg", { file: scene.file });
+      const result = await pollJob<{ maskFile: string; transparentFile: string }>(
+        jobId,
+        (j) => setBgJob({ stage: j.stage, progress: j.progress }),
+        1000
+      );
+      onScene({
+        bgRemoval: {
+          ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+          enabled: true,
+          maskFile: result.maskFile,
+          transparentFile: result.transparentFile,
+        },
+      } as Partial<Scene>);
+      flash("Recorte concluído com sucesso! Cenário virtual ativado.");
+    } catch (e) {
+      flash(e instanceof ApiError || e instanceof Error ? e.message : String(e));
+    } finally {
+      setBgJob(null);
+    }
+  };
 
   const transcribe = async () => {
     setJob({ stage: "Enviando", progress: 0 });
@@ -564,6 +592,264 @@ export const VideoPanel: React.FC<Props> = ({ scene, project, sourceTime, onScen
             </div>
           </>
         ) : null}
+      </div>
+
+      {/* Remoção de Fundo & Cenário Virtual (IA) */}
+      <div className="reframe-box" style={{ marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span className="field-label" style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Sparkles size={15} style={{ color: "#38bdf8" }} />
+            <span>Remoção de Fundo & Cenário Virtual (IA)</span>
+          </span>
+          {scene.bgRemoval?.enabled ? (
+            <button
+              className="btn tiny ghost"
+              style={{ padding: "2px 6px", fontSize: 11 }}
+              onClick={() =>
+                onScene({
+                  bgRemoval: {
+                    ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                    enabled: false,
+                  },
+                } as Partial<Scene>)
+              }
+            >
+              Desativar
+            </button>
+          ) : null}
+        </div>
+
+        {!scene.bgRemoval?.transparentFile ? (
+          <div>
+            <p style={{ fontSize: 12, color: "var(--muted, #8e94ab)", margin: "0 0 10px 0", lineHeight: 1.4 }}>
+              A IA de segmentação (RVM) detecta e recorta a silhueta da pessoa automaticamente em qualquer ambiente, sem precisar de tela verde. Em seguida, você pode escolher cenários modernos ou imagens próprias.
+            </p>
+            {bgJob ? (
+              <div style={{ padding: "10px", background: "var(--panel, #121520)", borderRadius: 6, border: "1px solid var(--line, #242938)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6, fontWeight: 500 }}>
+                  <span>{bgJob.stage}</span>
+                  <span>{Math.round(bgJob.progress * 100)}%</span>
+                </div>
+                <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      width: `${Math.round(bgJob.progress * 100)}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #38bdf8, #818cf8)",
+                      transition: "width 300ms ease",
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <button
+                className="btn primary block"
+                style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}
+                onClick={removeBackground}
+                disabled={busy}
+              >
+                <Sparkles size={14} />
+                <span>Recortar Fundo com IA</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div>
+            <label className="toggle" style={{ marginBottom: 10 }}>
+              <input
+                type="checkbox"
+                checked={!!scene.bgRemoval?.enabled}
+                onChange={(e) =>
+                  onScene({
+                    bgRemoval: {
+                      ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                      enabled: e.target.checked,
+                    },
+                  } as Partial<Scene>)
+                }
+              />
+              <span className="toggle-track" />
+              <span className="toggle-label">Ativar Cenário Virtual no Vídeo</span>
+            </label>
+
+            {scene.bgRemoval?.enabled ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {/* Seletor de Cenário */}
+                <div className="field">
+                  <span className="field-label">Escolha o Cenário</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginTop: 4 }}>
+                    {[
+                      { id: "podcast-studio", label: "Estúdio Podcast" },
+                      { id: "modern-office", label: "Escritório" },
+                      { id: "neon-loft", label: "Loft Neon" },
+                      { id: "warm-bookshelf", label: "Estante Livros" },
+                      { id: "studio-gradient", label: "Gradiente" },
+                    ].map((pst) => {
+                      const active = (scene.bgRemoval?.presetId ?? "podcast-studio") === pst.id && scene.bgRemoval?.backgroundType === "preset";
+                      return (
+                        <button
+                          key={pst.id}
+                          className={`btn tiny ${active ? "primary" : "ghost"}`}
+                          style={{ fontSize: 11, padding: "6px 4px", textAlign: "center" }}
+                          onClick={() =>
+                            onScene({
+                              bgRemoval: {
+                                ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                                backgroundType: "preset",
+                                presetId: pst.id as BackgroundPresetId,
+                              },
+                            } as Partial<Scene>)
+                          }
+                        >
+                          {pst.label}
+                        </button>
+                      );
+                    })}
+                    <button
+                      className={`btn tiny ${scene.bgRemoval?.backgroundType === "color" ? "primary" : "ghost"}`}
+                      style={{ fontSize: 11, padding: "6px 4px", textAlign: "center" }}
+                      onClick={() =>
+                        onScene({
+                          bgRemoval: {
+                            ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                            backgroundType: "color",
+                          },
+                        } as Partial<Scene>)
+                      }
+                    >
+                      Cor Sólida
+                    </button>
+                  </div>
+                </div>
+
+                {scene.bgRemoval?.backgroundType === "color" ? (
+                  <label className="field">
+                    <span className="field-label">Cor do Fundo</span>
+                    <input
+                      type="color"
+                      className="input"
+                      style={{ height: 36, padding: 2, cursor: "pointer" }}
+                      value={scene.bgRemoval?.backgroundColor ?? "#0f172a"}
+                      onChange={(e) =>
+                        onScene({
+                          bgRemoval: {
+                            ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                            backgroundColor: e.target.value,
+                          },
+                        } as Partial<Scene>)
+                      }
+                    />
+                  </label>
+                ) : null}
+
+                {/* Controles de Câmera e Profundidade do Cenário */}
+                <div className="grid-2">
+                  <label className="field">
+                    <span className="field-label">Desfoque Bokeh</span>
+                    <span className="slider">
+                      <input
+                        type="range"
+                        min={0}
+                        max={35}
+                        step={1}
+                        value={scene.bgRemoval?.blurAmount ?? 14}
+                        onChange={(e) =>
+                          onScene({
+                            bgRemoval: {
+                              ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                              blurAmount: Number(e.target.value),
+                            },
+                          } as Partial<Scene>, "blurAmount")
+                        }
+                      />
+                      <span className="slider-val">{scene.bgRemoval?.blurAmount ?? 14}px</span>
+                    </span>
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Iluminação do Fundo</span>
+                    <span className="slider">
+                      <input
+                        type="range"
+                        min={0.4}
+                        max={1.2}
+                        step={0.05}
+                        value={scene.bgRemoval?.sceneBrightness ?? 0.85}
+                        onChange={(e) =>
+                          onScene({
+                            bgRemoval: {
+                              ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                              sceneBrightness: Number(e.target.value),
+                            },
+                          } as Partial<Scene>, "sceneBrightness")
+                        }
+                      />
+                      <span className="slider-val">{Math.round((scene.bgRemoval?.sceneBrightness ?? 0.85) * 100)}%</span>
+                    </span>
+                  </label>
+                </div>
+
+                {/* Ajuste de Posição / Escala do Orador sobre o Cenário */}
+                <div className="grid-2">
+                  <label className="field">
+                    <span className="field-label">Escala do Orador</span>
+                    <span className="slider">
+                      <input
+                        type="range"
+                        min={0.8}
+                        max={1.4}
+                        step={0.05}
+                        value={scene.bgRemoval?.subjectScale ?? 1.0}
+                        onChange={(e) =>
+                          onScene({
+                            bgRemoval: {
+                              ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                              subjectScale: Number(e.target.value),
+                            },
+                          } as Partial<Scene>, "subjectScale")
+                        }
+                      />
+                      <span className="slider-val">{Math.round((scene.bgRemoval?.subjectScale ?? 1.0) * 100)}%</span>
+                    </span>
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Posição Vertical (Y)</span>
+                    <span className="slider">
+                      <input
+                        type="range"
+                        min={-30}
+                        max={30}
+                        step={1}
+                        value={scene.bgRemoval?.subjectPanY ?? 0}
+                        onChange={(e) =>
+                          onScene({
+                            bgRemoval: {
+                              ...(scene.bgRemoval ?? DEFAULT_BG_REMOVAL),
+                              subjectPanY: Number(e.target.value),
+                            },
+                          } as Partial<Scene>, "subjectPanY")
+                        }
+                      />
+                      <span className="slider-val">{(scene.bgRemoval?.subjectPanY ?? 0) > 0 ? `+${scene.bgRemoval?.subjectPanY}` : (scene.bgRemoval?.subjectPanY ?? 0)}%</span>
+                    </span>
+                  </label>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                  <button
+                    className="btn tiny ghost"
+                    style={{ fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}
+                    onClick={removeBackground}
+                    disabled={busy || !!bgJob}
+                    title="Recalcular recorte caso tenha feito alterações"
+                  >
+                    <RefreshCw size={12} />
+                    <span>Recalcular Recorte</span>
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="divider" />
