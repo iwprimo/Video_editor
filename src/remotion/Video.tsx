@@ -23,6 +23,7 @@ import { EffectsLayer, makePresentation } from "./effects";
 import { CaptionsLayer, OverlaysLayer } from "./overlays";
 import { HeadlineLayer } from "./HeadlineLayer";
 import { AudioLayer } from "./AudioLayer";
+import { CoverLayer } from "./CoverLayer";
 import { FPS, normalizeProject, segFrames, transitionFrames, totalFrames } from "./types";
 import type { ChartScene, ImageAsset, OutroScene, Project, Scene, StatsScene, TextScene, Theme, TitleScene, VideoScene } from "./types";
 
@@ -656,6 +657,7 @@ export const Video: React.FC<Project> = (raw) => {
         </TransitionSeries>
         <OverlaysLayer project={project} mediaBase={mediaBase} />
         <HeadlineLayer project={project} />
+        <CoverLayer project={project} />
         <CaptionsLayer project={project} />
         <ProgressBarLayer project={project} />
         <AudioLayer project={project} mediaBase={mediaBase} />

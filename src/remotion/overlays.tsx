@@ -528,6 +528,323 @@ const StickerView: React.FC<ViewProps> = ({ ov, theme, w }) => {
   }
 };
 
+const HookPunchView: React.FC<ViewProps> = ({ ov, theme, w }) => {
+  const frame = useCurrentFrame();
+  const color = str(ov.props.color) || "#ef4444";
+  const badge = str(ov.props.badge) || "ALERTA";
+  const text = str(ov.props.text) || "PARE O SCROLL!";
+  const pulse = 1 + Math.sin(frame * 0.25) * 0.04;
+
+  return (
+    <div
+      style={{
+        ...panel(theme, w),
+        width: w,
+        padding: `${w * 0.06}px ${w * 0.08}px`,
+        textAlign: "center",
+        border: `${Math.max(2, w * 0.008)}px solid ${alpha(color, 0.8)}`,
+        boxShadow: `0 ${w * 0.04}px ${w * 0.15}px ${alpha(color, 0.4)}, 0 ${w * 0.02}px ${w * 0.06}px rgba(0,0,0,0.8)`,
+        transform: `scale(${pulse})`,
+      }}
+    >
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: w * 0.02,
+          background: color,
+          color: isLight(color) ? "#121319" : "#ffffff",
+          padding: `${w * 0.02}px ${w * 0.05}px`,
+          borderRadius: 9999,
+          fontSize: w * 0.055,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: w * 0.03,
+          boxShadow: `0 ${w * 0.02}px ${w * 0.06}px ${alpha(color, 0.4)}`,
+        }}
+      >
+        <IconSvg name="flame" size={w * 0.055} strokeWidth={2.8} />
+        {badge}
+      </div>
+      <div
+        style={{
+          fontSize: w * 0.1,
+          fontWeight: 900,
+          lineHeight: 1.1,
+          letterSpacing: "-0.03em",
+          textTransform: "uppercase",
+          color: "#ffffff",
+          textShadow: `0 2px 10px rgba(0,0,0,0.9)`,
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+};
+
+const SocialQuoteView: React.FC<ViewProps> = ({ ov, theme, w }) => {
+  const author = str(ov.props.author) || "@usuario";
+  const badge = str(ov.props.badge) || "Seguidor";
+  const text = str(ov.props.text) || "Pergunta do seguidor...";
+  const likes = str(ov.props.likes) || "14.2k";
+  const verified = ov.props.verified !== false;
+
+  return (
+    <div
+      style={{
+        ...panel(theme, w),
+        width: w,
+        padding: `${w * 0.05}px ${w * 0.06}px`,
+        boxShadow: `0 ${w * 0.03}px ${w * 0.12}px rgba(0, 0, 0, 0.65)`,
+        border: `1px solid ${alpha(theme.ink, 0.15)}`,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: w * 0.035, marginBottom: w * 0.035 }}>
+        <div
+          style={{
+            width: w * 0.12,
+            height: w * 0.12,
+            borderRadius: "50%",
+            background: `linear-gradient(135deg, ${theme.accent}, #ec4899)`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#ffffff",
+            flex: "none",
+          }}
+        >
+          <IconSvg name="user" size={w * 0.065} strokeWidth={2.4} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: w * 0.015 }}>
+            <span style={{ fontSize: w * 0.055, fontWeight: 700, color: theme.ink }}>{author}</span>
+            {verified ? (
+              <span
+                style={{
+                  width: w * 0.045,
+                  height: w * 0.045,
+                  borderRadius: "50%",
+                  background: "#38bdf8",
+                  color: "#080c14",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <IconSvg name="check" size={w * 0.03} strokeWidth={3.5} />
+              </span>
+            ) : null}
+          </div>
+          <div style={{ fontSize: w * 0.04, color: theme.muted }}>{badge}</div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          fontSize: w * 0.065,
+          fontWeight: 600,
+          lineHeight: 1.25,
+          color: theme.ink,
+          textAlign: "left",
+          marginBottom: w * 0.035,
+        }}
+      >
+        “{text}”
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: w * 0.05,
+          paddingTop: w * 0.025,
+          borderTop: `1px solid ${alpha(theme.ink, 0.08)}`,
+          fontSize: w * 0.045,
+          color: theme.muted,
+        }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: w * 0.015, color: "#ef4444" }}>
+          <IconSvg name="heart" size={w * 0.045} strokeWidth={2.4} color="#ef4444" />
+          {likes}
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: w * 0.015 }}>
+          <IconSvg name="message-circle" size={w * 0.045} strokeWidth={2.4} />
+          Responder
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const SoundwaveView: React.FC<ViewProps> = ({ ov, theme, w }) => {
+  const frame = useCurrentFrame();
+  const color = str(ov.props.color) || "#22c55e";
+  const sender = str(ov.props.sender) || "Mensagem de voz";
+  const time = str(ov.props.time) || "0:15";
+
+  const numBars = 20;
+  const progress = (frame % 75) / 75;
+
+  return (
+    <div
+      style={{
+        ...panel(theme, w),
+        width: w,
+        padding: `${w * 0.045}px ${w * 0.06}px`,
+        boxShadow: `0 ${w * 0.03}px ${w * 0.12}px rgba(0, 0, 0, 0.6)`,
+      }}
+    >
+      <div style={{ fontSize: w * 0.045, fontWeight: 600, color: theme.muted, marginBottom: w * 0.025, textAlign: "left" }}>
+        {sender}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: w * 0.04 }}>
+        <div
+          style={{
+            width: w * 0.13,
+            height: w * 0.13,
+            borderRadius: "50%",
+            background: color,
+            color: isLight(color) ? "#121319" : "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "none",
+            boxShadow: `0 4px 14px ${alpha(color, 0.4)}`,
+          }}
+        >
+          <IconSvg name="play" size={w * 0.065} strokeWidth={2.8} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: w * 0.012, flex: 1, height: w * 0.12 }}>
+          {Array.from({ length: numBars }).map((_, i) => {
+            const ratio = i / numBars;
+            const isPlayed = ratio <= progress;
+            const barWave = Math.abs(Math.sin((frame * 0.2) + i * 0.45));
+            const barHeight = Math.max(0.18, barWave) * (w * 0.11);
+            return (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: barHeight,
+                  borderRadius: 999,
+                  background: isPlayed ? color : alpha(theme.ink, 0.25),
+                  transition: "height 0.05s ease",
+                }}
+              />
+            );
+          })}
+        </div>
+
+        <div style={{ fontSize: w * 0.045, fontWeight: 700, color: theme.ink, flex: "none", fontVariantNumeric: "tabular-nums" }}>
+          {time}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const VersusView: React.FC<ViewProps> = ({ ov, theme, w }) => {
+  const title = str(ov.props.title) || "Comparativo";
+  const leftBadge = str(ov.props.leftBadge) || "ERRADO";
+  const leftText = str(ov.props.leftText) || "Fazer manual";
+  const leftColor = str(ov.props.leftColor) || "#ef4444";
+  const rightBadge = str(ov.props.rightBadge) || "CERTO";
+  const rightText = str(ov.props.rightText) || "Usar automação";
+  const rightColor = str(ov.props.rightColor) || "#22c55e";
+
+  return (
+    <div
+      style={{
+        ...panel(theme, w),
+        width: w,
+        padding: `${w * 0.045}px ${w * 0.055}px`,
+        boxShadow: `0 ${w * 0.03}px ${w * 0.14}px rgba(0, 0, 0, 0.7)`,
+      }}
+    >
+      {title ? (
+        <div style={{ fontSize: w * 0.055, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: theme.muted, marginBottom: w * 0.03, textAlign: "center" }}>
+          {title}
+        </div>
+      ) : null}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: w * 0.03 }}>
+        <div
+          style={{
+            background: alpha(leftColor, 0.12),
+            border: `${Math.max(1, w * 0.004)}px solid ${alpha(leftColor, 0.4)}`,
+            borderRadius: w * 0.03,
+            padding: `${w * 0.035}px ${w * 0.03}px`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: w * 0.015,
+              background: leftColor,
+              color: "#ffffff",
+              padding: `${w * 0.012}px ${w * 0.03}px`,
+              borderRadius: 9999,
+              fontSize: w * 0.045,
+              fontWeight: 900,
+              letterSpacing: "0.05em",
+              marginBottom: w * 0.025,
+            }}
+          >
+            <IconSvg name="x" size={w * 0.04} strokeWidth={3.5} />
+            {leftBadge}
+          </div>
+          <div style={{ fontSize: w * 0.05, fontWeight: 600, color: theme.ink, lineHeight: 1.25 }}>
+            {leftText}
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: alpha(rightColor, 0.12),
+            border: `${Math.max(1, w * 0.004)}px solid ${alpha(rightColor, 0.4)}`,
+            borderRadius: w * 0.03,
+            padding: `${w * 0.035}px ${w * 0.03}px`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: w * 0.015,
+              background: rightColor,
+              color: "#ffffff",
+              padding: `${w * 0.012}px ${w * 0.03}px`,
+              borderRadius: 9999,
+              fontSize: w * 0.045,
+              fontWeight: 900,
+              letterSpacing: "0.05em",
+              marginBottom: w * 0.025,
+            }}
+          >
+            <IconSvg name="check" size={w * 0.04} strokeWidth={3.5} />
+            {rightBadge}
+          </div>
+          <div style={{ fontSize: w * 0.05, fontWeight: 600, color: theme.ink, lineHeight: 1.25 }}>
+            {rightText}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const VIEWS: Record<Overlay["kind"], React.FC<ViewProps>> = {
   image: ImageView,
   video: BrollView,
@@ -541,9 +858,13 @@ const VIEWS: Record<Overlay["kind"], React.FC<ViewProps>> = {
   progress: ProgressView,
   checklist: ChecklistView,
   cta: CtaView,
+  hookPunch: HookPunchView,
+  socialQuote: SocialQuoteView,
+  soundwave: SoundwaveView,
+  versus: VersusView,
 };
 
-// Entrada e saída padrão de qualquer ilustração
+// Entrada e saída padrão de qualquer ilustração com animações virais
 const OverlayFrame: React.FC<{ ov: Overlay; frames: number; captionsBottom: boolean; children: React.ReactNode }> = ({
   ov,
   frames,
@@ -554,11 +875,39 @@ const OverlayFrame: React.FC<{ ov: Overlay; frames: number; captionsBottom: bool
   const { fps, width, height } = useVideoConfig();
   const sp = spring({ frame, fps, config: { damping: 18, stiffness: 170 } });
   const exit = interpolate(frame, [frames - 8, frames], [1, 0], clamp);
-  const anim = ov.kind === "image" || ov.kind === "video" ? String(ov.props.animation ?? "pop") : "pop";
+  const anim = String(ov.props.animation ?? "pop");
   const pad = Math.round(Math.min(width, height) * 0.06);
+
   let transform = `scale(${0.92 + 0.08 * sp}) translateY(${(1 - sp) * 16}px)`;
-  if (anim === "fade" || ov.position === "full") transform = "none";
-  if (anim === "slide") transform = `translateX(${(1 - sp) * (ov.position.includes("left") ? -60 : 60)}px)`;
+
+  if (anim === "slam") {
+    const slamSp = spring({ frame, fps, config: { damping: 14, stiffness: 220 } });
+    const scale = interpolate(slamSp, [0, 1], [2.2, 1], clamp);
+    const shake = frame >= 3 && frame <= 7 ? (Math.sin(frame * 8) * 6) : 0;
+    transform = `scale(${scale}) translateY(${shake}px)`;
+  } else if (anim === "slideUp") {
+    const slideSp = spring({ frame, fps, config: { damping: 16, stiffness: 180 } });
+    transform = `translateY(${(1 - slideSp) * 70}px)`;
+  } else if (anim === "slideLeft") {
+    const slideSp = spring({ frame, fps, config: { damping: 16, stiffness: 180 } });
+    transform = `translateX(${(1 - slideSp) * -80}px)`;
+  } else if (anim === "slideRight") {
+    const slideSp = spring({ frame, fps, config: { damping: 16, stiffness: 180 } });
+    transform = `translateX(${(1 - slideSp) * 80}px)`;
+  } else if (anim === "glitch") {
+    const glitchJitter = frame < 8 && frame % 2 === 0 ? Math.sin(frame * 3) * 8 : 0;
+    transform = `scale(${0.94 + 0.06 * sp}) translateX(${glitchJitter}px)`;
+  } else if (anim === "float") {
+    const floatY = Math.sin((frame * 4 * Math.PI) / 180) * 8;
+    transform = `scale(${0.94 + 0.06 * sp}) translateY(${floatY}px)`;
+  } else if (anim === "pulse") {
+    const pulseScale = 1 + Math.sin((frame * 8 * Math.PI) / 180) * 0.04;
+    transform = `scale(${sp * pulseScale})`;
+  } else if (anim === "fade" || ov.position === "full") {
+    transform = "none";
+  } else if (anim === "slide") {
+    transform = `translateX(${(1 - sp) * (ov.position.includes("left") ? -60 : 60)}px)`;
+  }
   return (
     <AbsoluteFill
       style={{

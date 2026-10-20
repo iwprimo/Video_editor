@@ -64,6 +64,21 @@ Developed and maintained by **iwprimo** ([iwprimo@gmail.com](mailto:iwprimo@gmai
   - Generates algorithm-optimized posts for TikTok, Instagram Reels, and YouTube Shorts from video speech.
   - High-CTR hooks, persuasive captions, and segmented niche hashtags with 1-click clipboard copy.
 
+- **Video Cover Creator (1st Frame Hook & Thumbnail Generator):**
+  - Design eye-catching viral video covers and first-frame thumbnails with high-CTR titles and category badges.
+  - 5 viral presets: *Hormozi Viral* (thick black stroke, electric yellow), *MrBeast Impact* (neon green, double stroke), *Cyber Neon* (pulsing glow), *Dark Bold Box* (documentary/news style), and *Minimal Clean*.
+  - Configurable vertical placement (top, center, bottom), background darkening, cinematic blur, and duration (1st frame only for feed thumb, 1s quick hook, or 2s full intro card).
+  - 1-click **1080p PNG Cover Export** for custom YouTube Studio or Instagram thumbnail uploads.
+
+- **Viral Motion Graphics & Kinetic Animations:**
+  - Expanded motion graphics library featuring high-retention formats:
+    - **Impact Hook (`hookPunch`):** High-urgency alert to stop users from scrolling.
+    - **Social Post / Follower Card (`socialQuote`):** X/TikTok/Threads style post with verified badge and question.
+    - **Voice Note Waveform (`soundwave`):** WhatsApp/Telegram-style audio player with real-time animated sound bars.
+    - **Right vs Wrong / Versus (`versus`):** Side-by-side comparative cards with contrasting badges.
+    - Plus animated Bar Charts, Counters, Progress Rings, Checklists, Lower Thirds, and Callouts.
+  - Kinetic animation engine with 9 procedural styles: *Pop*, *Impact Slam* (screen-shaking drop), *Elastic Slide Up*, *Slide Left/Right*, *Cyber Glitch*, *Continuous Floating Sway*, *Attention Pulse*, and *Fade*.
+
 - **Clean UI & Modern SVG Icons:**
   - Strictly zero-emoji UI policy: all buttons, controls, and dialogs use clean, lightweight Lucide SVG icons.
 

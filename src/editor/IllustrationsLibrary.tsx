@@ -10,7 +10,20 @@ export type OverlayPayload = { kind: OverlayKind; props?: Record<string, unknown
 
 type Tab = "motion" | "stickers" | "icons" | "images" | "broll" | "ai";
 
-const MOTION: OverlayKind[] = ["lowerThird", "callout", "keyword", "counter", "barChart", "progress", "checklist", "cta"];
+const MOTION: OverlayKind[] = [
+  "hookPunch",
+  "socialQuote",
+  "versus",
+  "soundwave",
+  "keyword",
+  "callout",
+  "lowerThird",
+  "counter",
+  "progress",
+  "barChart",
+  "checklist",
+  "cta",
+];
 
 export type ImageProvider = "gemini" | "openai";
 export type ImageKeys = { gemini: boolean; openai: boolean; preferred: ImageProvider };
@@ -61,6 +74,40 @@ const drag = (payload: OverlayPayload) => (e: React.DragEvent) => {
 // Miniaturas estilizadas de cada motion graphic
 const MotionThumb: React.FC<{ kind: OverlayKind }> = ({ kind }) => (
   <span className={`thumb mg mg-${kind}`} aria-hidden>
+    {kind === "hookPunch" ? (
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+        <span style={{ background: "#ef4444", color: "#fff", fontSize: 8, fontWeight: 900, padding: "1px 5px", borderRadius: 4 }}>ALERTA</span>
+        <b style={{ fontSize: 9, color: "#fff", textTransform: "uppercase" }}>GANCHO</b>
+      </span>
+    ) : null}
+    {kind === "socialQuote" ? (
+      <span style={{ display: "flex", flexDirection: "column", gap: 2, padding: "3px 6px", width: "100%", background: "rgba(255,255,255,0.08)", borderRadius: 4 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#38bdf8", display: "inline-block" }} />
+          <b style={{ fontSize: 8, color: "#cbd5e1" }}>@post</b>
+        </span>
+        <em style={{ fontSize: 7, color: "#94a3b8", fontStyle: "normal" }}>Pergunta...</em>
+      </span>
+    ) : null}
+    {kind === "soundwave" ? (
+      <span style={{ display: "flex", alignItems: "center", gap: 3, height: 16 }}>
+        <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+        <span style={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <i style={{ width: 2, height: 6, background: "#22c55e", borderRadius: 1 }} />
+          <i style={{ width: 2, height: 12, background: "#22c55e", borderRadius: 1 }} />
+          <i style={{ width: 2, height: 8, background: "#22c55e", borderRadius: 1 }} />
+          <i style={{ width: 2, height: 14, background: "#22c55e", borderRadius: 1 }} />
+          <i style={{ width: 2, height: 7, background: "#22c55e", borderRadius: 1 }} />
+        </span>
+      </span>
+    ) : null}
+    {kind === "versus" ? (
+      <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 8, fontWeight: 800 }}>
+        <span style={{ color: "#ef4444" }}>ERRADO</span>
+        <span style={{ color: "#64748b" }}>vs</span>
+        <span style={{ color: "#22c55e" }}>CERTO</span>
+      </span>
+    ) : null}
     {kind === "lowerThird" ? (
       <span className="mg-lt">
         <i />

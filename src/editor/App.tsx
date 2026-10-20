@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Player, PlayerRef } from "@remotion/player";
-import { Heart, MessageCircle, Bookmark, Share2, Download, Shield, Sparkles, Flame, Scissors } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Share2, Download, Shield, Sparkles, Flame, Scissors, Image as ImageIcon } from "lucide-react";
 import { Video } from "../remotion/Video";
 import {
   DEFAULT_CAPTIONS,
@@ -45,6 +45,7 @@ import { PublicConfig, Settings, loadConfig } from "./Settings";
 import { ExportModal } from "./ExportModal";
 import { HighlightsModal, Highlight } from "./HighlightsModal";
 import { SocialCopyModal } from "./SocialCopyModal";
+import { CoverModal } from "./CoverModal";
 import { applyOps, AiOp } from "./ops";
 import { imageSize, pollJob, postJson, uploadFile } from "./api";
 
@@ -116,6 +117,7 @@ export const App: React.FC = () => {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const [socialCopyOpen, setSocialCopyOpen] = useState(false);
+  const [coverModalOpen, setCoverModalOpen] = useState(false);
   const [promptBusy, setPromptBusy] = useState(false);
   const [promptStatus, setPromptStatus] = useState<string | null>(null);
   const [promptHistory, setPromptHistory] = useState<PromptEntry[]>([]);
@@ -973,6 +975,16 @@ export const App: React.FC = () => {
           </button>
           <button
             type="button"
+            className="btn ghost"
+            onClick={() => setCoverModalOpen(true)}
+            title="Criador de capa viral e título no primeiro frame (Thumbnail)"
+            style={{ display: "inline-flex", alignItems: "center" }}
+          >
+            <ImageIcon size={15} style={{ marginRight: 6, color: "#38bdf8" }} />
+            Capa do Vídeo
+          </button>
+          <button
+            type="button"
             className="btn primary"
             onClick={() => setExportModalOpen(true)}
             title="Abrir opções de exportação para Reels, TikTok, Shorts e redes sociais"
@@ -1190,6 +1202,13 @@ export const App: React.FC = () => {
         open={socialCopyOpen}
         onClose={() => setSocialCopyOpen(false)}
         project={project}
+      />
+
+      <CoverModal
+        open={coverModalOpen}
+        onClose={() => setCoverModalOpen(false)}
+        project={project}
+        onUpdateProject={history.set}
       />
 
       {dragOver ? (

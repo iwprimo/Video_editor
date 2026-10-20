@@ -169,6 +169,23 @@ Disponível na aba lateral `Stickers` dentro da Biblioteca de Ilustrações:
 - **Controle de Qualidade:** Opção de bitrate alto (CRF 18) ou padrão (CRF 22).
 - Renderização paralela com barra de progresso em tempo real e download direto do arquivo `.mp4` ao concluir.
 
+### 11. Criador de Capa Viral (1º Frame / Thumbnail)
+- Clique no botão `Capa do Vídeo` no cabeçalho superior.
+- **Definição do 1º Frame:** Plataformas como TikTok, Reels e Shorts utilizam o primeiro frame como miniatura de exibição no feed. O criador permite compor um título magnético nos primeiros quadros.
+- **5 Templates Virais de Alto CTR:** Hormozi Viral, MrBeast Impact, Cyber Neon, Dark Bold Box e Minimal Clean.
+- **Controles Avançados:** Posição vertical (topo, centro, base), escurecimento e vinheta de fundo, desfoque cinematográfico e tamanho de fonte.
+- **Exportação PNG em 1080p:** Botão para download direto do arquivo de imagem em alta resolução para upload como miniatura personalizada no YouTube Studio ou Instagram.
+- **Aplicação no Vídeo:** Ativa a camada de capa no projeto com duração ajustável (1 frame, 1s ou 2s como gancho de abertura).
+
+### 12. Biblioteca de Motion Graphics Virais & Animações
+- Aba `Motion` na biblioteca lateral expandida com gráficos de retenção e conversão:
+  - **Gancho de Impacto (`hookPunch`):** Alerta viral de alta urgência para reter o scroll nos primeiros segundos.
+  - **Card de Seguidor (`socialQuote`):** Estilo post de rede social (Twitter/X, TikTok, Threads) com avatar, selo de verificado e pergunta do seguidor.
+  - **Mensagem de Voz (`soundwave`):** Player de áudio estilo WhatsApp/Telegram com equalizador e ondas sonoras pulsando em tempo real.
+  - **Certo vs Errado (`versus`):** Comparativo visual em 2 colunas com badges de contraste (vermelho vs verde).
+  - Além de Palavra-chave, Destaque, Contador, Anel de Progresso, Gráficos e Checklists.
+- **Seletor de Animações Cinéticas:** Cada elemento pode entrar com *Pop com Salto*, *Impact Slam* (queda com tremor de tela), *Subida Elástica*, *Deslize Lateral*, *Cyber Glitch*, *Flutuação Levitação Contínua* ou *Pulso de Atenção*.
+
 ---
 
 ## ⌨️ Tabela de Atalhos de Teclado

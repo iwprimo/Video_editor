@@ -52,10 +52,24 @@ Para encerrar, feche a janela do terminal.
 
 Na biblioteca (esquerda), seção **Ilustrações**:
 
-- **Motion**: nome e cargo, destaque, palavra-chave, contador, gráfico, anel de progresso, lista com check, chamada
+- **Motion**:
+  - **Ganchos & Redes:** Gancho de Impacto (`hookPunch`), Card de Post/Seguidor (`socialQuote`), Mensagem de Voz (`soundwave`), Certo vs Errado (`versus`)
+  - **Retenção & Métricas:** Palavra-chave, Destaque, Contador, Anel de progresso, Gráfico de barras, Lista com check, Nome e cargo, Chamada (CTA)
+  - **Animações Cinéticas:** Pop com Salto, Impact Slam (queda com tremor de tela), Subida Elástica, Deslize Lateral, Cyber Glitch, Flutuação Contínua (Levitação), Pulso de Atenção e Fade
+- **Stickers Animados:** Setas direcionais, círculos de atenção, badge de verificado, fogo/tendência, botão de seguir com sino, alerta de atenção (100% SVG vetorial com física de spring)
 - **Ícones**: 1.800+ ícones Lucide; a busca entende português (*fábrica*, *segurança*, *meta*, *tempo*…)
 - **Imagens**: envie fotos, logos e prints (PNG transparente funciona bem para logos)
+- **B-Roll**: busca integrada de clipes gratuitos em alta definição da Pexels e sugestão inteligente por IA
 - **Gerar com IA**: escolha o gerador — **Nano Banana** (Google Gemini) ou **GPT Image** (OpenAI) —, descreva a ilustração e ela é criada e inserida no ponto do cursor (tem custo por imagem)
+
+## Criador de Capa Viral (1º Frame / Thumbnail)
+
+No topo do editor, o botão **Capa do Vídeo** abre o estúdio de miniaturas:
+- **Primeiro Frame das Redes:** Configura o título e badge de categoria no quadro inicial do vídeo para servir de capa automática no TikTok, Instagram Reels e YouTube Shorts.
+- **5 Templates Virais de Alto CTR:** Hormozi Viral, MrBeast Impact, Cyber Neon, Dark Bold Box e Minimal Clean.
+- **Controles Precisos:** Posição (topo, centro, base), vinheta/escurecimento de fundo, desfoque cinematográfico, tamanho da tipografia e safe zones.
+- **Exportação PNG em 1080p:** Botão de download direto do arquivo de imagem em alta definição para envio como thumbnail personalizada.
+
 
 ### Nano Banana 2 (Google Gemini)
 

@@ -161,6 +161,24 @@ export const OverlayInspector: React.FC<Props> = ({ overlay: ov, project, onChan
         </div>
       </div>
 
+      <Field label="Animação de Entrada / Movimento">
+        <select
+          className="input"
+          value={p.animation ?? "pop"}
+          onChange={(e) => prop("animation", e.target.value)}
+        >
+          <option value="pop">Pop com Salto (Viral)</option>
+          <option value="slam">Impact Slam (Queda com Impacto)</option>
+          <option value="slideUp">Subida Elástica</option>
+          <option value="slideLeft">Deslize da Esquerda</option>
+          <option value="slideRight">Deslize da Direita</option>
+          <option value="glitch">Glitch Cyberpunk</option>
+          <option value="float">Flutuação Contínua (Levitação)</option>
+          <option value="pulse">Pulso de Atenção</option>
+          <option value="fade">Aparecer Suave (Fade)</option>
+        </select>
+      </Field>
+
       <div className="divider" />
 
       {ov.kind === "image" ? (
@@ -454,6 +472,96 @@ export const OverlayInspector: React.FC<Props> = ({ overlay: ov, project, onChan
               onChange={(e) => prop("items", e.target.value.split("\n").slice(0, 8), "items")}
             />
           </Field>
+        </>
+      ) : null}
+
+      {ov.kind === "hookPunch" ? (
+        <>
+          <div className="group-title">Gancho de Impacto</div>
+          <Field label="Texto do Gancho">
+            <input className="input" value={p.text ?? ""} onChange={(e) => prop("text", e.target.value)} />
+          </Field>
+          <div className="grid-2">
+            <Field label="Badge / Etiqueta">
+              <input className="input" value={p.badge ?? ""} onChange={(e) => prop("badge", e.target.value)} />
+            </Field>
+            <Field label="Cor de Destaque">
+              <input type="color" className="input color-input" value={p.color ?? "#ef4444"} onChange={(e) => prop("color", e.target.value)} />
+            </Field>
+          </div>
+        </>
+      ) : null}
+
+      {ov.kind === "socialQuote" ? (
+        <>
+          <div className="group-title">Card de Post / Seguidor</div>
+          <div className="grid-2">
+            <Field label="Autor (@)">
+              <input className="input" value={p.author ?? ""} onChange={(e) => prop("author", e.target.value)} />
+            </Field>
+            <Field label="Badge / Rótulo">
+              <input className="input" value={p.badge ?? ""} onChange={(e) => prop("badge", e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Pergunta / Texto">
+            <textarea
+              className="input area"
+              rows={3}
+              value={p.text ?? ""}
+              onChange={(e) => prop("text", e.target.value)}
+            />
+          </Field>
+          <div className="grid-2">
+            <Field label="Curtidas">
+              <input className="input" value={p.likes ?? "14.2k"} onChange={(e) => prop("likes", e.target.value)} />
+            </Field>
+            <label className="toggle" style={{ alignSelf: "center", marginTop: 16 }}>
+              <input type="checkbox" checked={p.verified !== false} onChange={(e) => prop("verified", e.target.checked)} />
+              <span>Selo Verificado</span>
+            </label>
+          </div>
+        </>
+      ) : null}
+
+      {ov.kind === "soundwave" ? (
+        <>
+          <div className="group-title">Mensagem de Voz / Áudio</div>
+          <Field label="Remetente / Título">
+            <input className="input" value={p.sender ?? ""} onChange={(e) => prop("sender", e.target.value)} />
+          </Field>
+          <div className="grid-2">
+            <Field label="Tempo">
+              <input className="input" value={p.time ?? "0:15"} onChange={(e) => prop("time", e.target.value)} />
+            </Field>
+            <Field label="Cor">
+              <input type="color" className="input color-input" value={p.color ?? "#22c55e"} onChange={(e) => prop("color", e.target.value)} />
+            </Field>
+          </div>
+        </>
+      ) : null}
+
+      {ov.kind === "versus" ? (
+        <>
+          <div className="group-title">Comparativo Certo vs Errado</div>
+          <Field label="Título Geral">
+            <input className="input" value={p.title ?? ""} onChange={(e) => prop("title", e.target.value)} />
+          </Field>
+          <div className="grid-2">
+            <Field label="Badge Lado 1">
+              <input className="input" value={p.leftBadge ?? "ERRADO"} onChange={(e) => prop("leftBadge", e.target.value)} />
+            </Field>
+            <Field label="Badge Lado 2">
+              <input className="input" value={p.rightBadge ?? "CERTO"} onChange={(e) => prop("rightBadge", e.target.value)} />
+            </Field>
+          </div>
+          <div className="grid-2">
+            <Field label="Texto Lado 1 (Errado/Antes)">
+              <textarea className="input area" rows={2} value={p.leftText ?? ""} onChange={(e) => prop("leftText", e.target.value)} />
+            </Field>
+            <Field label="Texto Lado 2 (Certo/Depois)">
+              <textarea className="input area" rows={2} value={p.rightText ?? ""} onChange={(e) => prop("rightText", e.target.value)} />
+            </Field>
+          </div>
         </>
       ) : null}
     </>

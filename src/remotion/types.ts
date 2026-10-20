@@ -269,6 +269,7 @@ export type Project = {
   audio?: BackgroundAudio; // trilha sonora e auto-ducking (Fase 3)
   progressBar?: ProgressBarSettings; // barra de progresso visual de retenção (Fase 4)
   headline?: HeadlineSettings; // manchete de topo / gancho viral (Fase A)
+  cover?: CoverSettings; // capa do vídeo com título no primeiro frame
 };
 
 // ---------- Tipografia Viral ----------
@@ -308,6 +309,43 @@ export const DEFAULT_HEADLINE: HeadlineSettings = {
   textColor: "#121319",
   fontSize: 1.0,
   uppercase: true,
+  fontFamily: "Inter",
+};
+
+// ---------- Capa do Vídeo (Primeiro Frame / Thumbnail Viral) ----------
+
+export type CoverStyle = "hormozi" | "mrbeast" | "neon" | "box" | "minimal";
+export type CoverPosition = "top" | "center" | "bottom";
+
+export type CoverSettings = {
+  enabled: boolean;
+  title: string;
+  subtitle?: string;
+  style: CoverStyle;
+  position: CoverPosition;
+  fontSize: number; // 0.8 .. 1.6 (padrão 1.1)
+  color?: string; // cor do destaque
+  textColor?: string;
+  uppercase?: boolean;
+  darken: number; // 0 .. 0.9 (vinheta / escurecimento para contraste)
+  blur: number; // 0 .. 20px (desfoque cinematográfico de fundo)
+  durationSeconds: number; // 0.1 = apenas primeiro frame (thumb das redes), 1.0 = 1s, 2.0 = 2s
+  fontFamily?: string;
+};
+
+export const DEFAULT_COVER: CoverSettings = {
+  enabled: false,
+  title: "O SEGREDO QUE NINGUÉM CONTA!",
+  subtitle: "DICA RÁPIDA",
+  style: "hormozi",
+  position: "center",
+  fontSize: 1.1,
+  color: "#ffd84d",
+  textColor: "#ffffff",
+  uppercase: true,
+  darken: 0.45,
+  blur: 0,
+  durationSeconds: 0.1,
   fontFamily: "Inter",
 };
 
@@ -421,7 +459,22 @@ export type OverlayKind =
   | "barChart"
   | "progress"
   | "checklist"
-  | "cta";
+  | "cta"
+  | "hookPunch"
+  | "socialQuote"
+  | "soundwave"
+  | "versus";
+
+export type MotionAnimation =
+  | "pop"
+  | "slam"
+  | "slideUp"
+  | "slideLeft"
+  | "slideRight"
+  | "glitch"
+  | "float"
+  | "pulse"
+  | "fade";
 
 export type StickerType =
   | "arrow-down"
@@ -591,6 +644,64 @@ export const OVERLAYS: Record<
   progress: { name: "Anel de progresso", description: "Porcentagem em anel animado", position: "top-right", size: 0.35, duration: 4, props: { value: 75, label: "Meta" } },
   checklist: { name: "Lista", description: "Itens que vão sendo marcados", position: "left", size: 0.55, duration: 6, props: { title: "Etapas", items: ["Planejar", "Executar", "Revisar"] } },
   cta: { name: "Chamada", description: "Botão de ação no fim", position: "bottom", size: 0.5, duration: 4, props: { text: "Saiba mais" } },
+  hookPunch: {
+    name: "Gancho de Impacto",
+    description: "Alerta viral de alta urgência para prender o scroll",
+    position: "top",
+    size: 0.65,
+    duration: 3,
+    props: {
+      text: "PARE DE FAZER ISSO!",
+      badge: "ALERTA VIRAL",
+      color: "#ef4444",
+      animation: "slam",
+    },
+  },
+  socialQuote: {
+    name: "Card de Seguidor",
+    description: "Post estilo X/TikTok com pergunta do seguidor e verificado",
+    position: "center",
+    size: 0.65,
+    duration: 4,
+    props: {
+      author: "@usuario_viral",
+      badge: "Criador",
+      text: "Como você conseguiu esse resultado em menos de 7 dias?",
+      likes: "14.2k",
+      verified: true,
+      animation: "pop",
+    },
+  },
+  soundwave: {
+    name: "Mensagem de Voz",
+    description: "Player de áudio animado estilo WhatsApp / gravação",
+    position: "bottom",
+    size: 0.6,
+    duration: 4,
+    props: {
+      sender: "Áudio do seguidor",
+      time: "0:15",
+      color: "#22c55e",
+      animation: "slideUp",
+    },
+  },
+  versus: {
+    name: "Certo vs Errado",
+    description: "Comparativo visual com dois lados e badges de contraste",
+    position: "center",
+    size: 0.75,
+    duration: 4.5,
+    props: {
+      title: "Antes vs Depois",
+      leftBadge: "ERRADO",
+      leftText: "Fazer tudo manual",
+      leftColor: "#ef4444",
+      rightBadge: "CERTO",
+      rightText: "Usar automação IA",
+      rightColor: "#22c55e",
+      animation: "pop",
+    },
+  },
 };
 
 export const SCENE_LABELS: Record<SceneType, string> = {
@@ -844,6 +955,7 @@ export const defaultProject = (): Project => ({
     { ...(makeScene("outro") as OutroScene), brand: "Remotion", tag: "Editado no seu navegador", effects: [makeEffect("leak", 0.5)] },
   ],
   effects: [makeEffect("vignette", 0.5)],
+  cover: { ...DEFAULT_COVER },
 });
 
 // ---------- Brand Kits & Export Presets (Fase 5) ----------
