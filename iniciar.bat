@@ -6,10 +6,18 @@ cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 goto semnode
 
-if exist node_modules goto rodar
-echo Instalando dependencias - so na primeira vez, pode levar alguns minutos...
-call npm install
-if errorlevel 1 goto erro
+if not exist node_modules (
+  echo Instalando dependencias do editor (Node.js) - so na primeira vez...
+  call npm install
+  if errorlevel 1 goto erro
+)
+
+where python >nul 2>nul
+if not errorlevel 1 (
+  if exist requirements.txt (
+    call pip install -r requirements.txt -q --disable-pip-version-check 2>nul
+  )
+)
 
 :rodar
 echo.

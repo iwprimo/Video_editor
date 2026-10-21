@@ -1,0 +1,6 @@
+# Dependências Python para Remoção de Fundo com IA (Robust Video Matting)
+onnxruntime>=1.20.0
+opencv-python-headless>=4.10.0
+numpy>=1.26.0
+pillow>=10.0.0
+imageio-ffmpeg>=0.5.0

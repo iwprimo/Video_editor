@@ -92,8 +92,10 @@ Developed and maintained by **iwprimo** ([iwprimo@gmail.com](mailto:iwprimo@gmai
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
-- [FFmpeg](https://ffmpeg.org/) installed and available in your PATH
+- [Node.js](https://nodejs.org/) (v20 or v22 LTS recommended)
+- [Python](https://www.python.org/) (v3.10 or higher, for local AI background removal and virtual sets)
+- Google Chrome or Microsoft Edge updated (hardware accelerated video playback)
+- *Note: FFmpeg is bundled automatically with Remotion and Python dependencies — no manual FFmpeg setup required.*
 
 ### Installation
 

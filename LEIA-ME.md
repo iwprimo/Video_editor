@@ -4,12 +4,14 @@ Editor visual para montar vídeos: cenas prontas (título, gráfico, números, f
 
 ## Requisitos
 
-- **Node.js 22 LTS** ou mais novo — https://nodejs.org
-- **Chrome ou Edge** atualizado para usar o editor (a prévia de vídeo precisa do suporte a H.264)
-- Internet na primeira execução (instala as dependências e baixa o navegador que o Remotion usa para renderizar)
+- **Node.js 22 LTS** ou mais novo — https://nodejs.org (obrigatório para o editor e servidor local)
+- **Python 3.10 ou superior** — https://python.org (necessário para a ferramenta de **Remoção de Fundo com IA & Cenário Virtual**; o `iniciar.bat` já instala os módulos do `requirements.txt` automaticamente)
+- **Chrome ou Edge** atualizado para usar o editor (a prévia de vídeo precisa do suporte nativo a H.264/WebM)
+- **FFmpeg separado? NÃO é necessário!** O editor já inclui FFmpeg internamente embutido pelo Remotion e pelas dependências de IA.
+- Internet na primeira execução (instala as dependências e baixa o navegador de renderização)
 - Opcional, configuradas na engrenagem do editor:
   - chave da **API da Claude** (edição por prompt)
-  - chave da **API do Gemini** para gerar imagens com o **Nano Banana 2** (gerador padrão)
+  - chave da **API do Gemini** para gerar imagens e capas com IA (Nano Banana 2 / Imagen)
   - chave da **API da OpenAI** para gerar imagens com o GPT Image
 
 ## Como abrir
