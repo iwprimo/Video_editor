@@ -280,6 +280,19 @@ app.post("/api/remove-bg", (req, res) => {
     console.error("[remove_bg py]", String(data));
   });
 
+  py.on("error", (err) => {
+    if (err.code === "ENOENT") {
+      fail(
+        job,
+        new Error(
+          "Python não foi encontrado no sistema. Para usar o Recorte de Fundo com IA, instale o Python em https://python.org e marque a opção 'Add python.exe to PATH'."
+        )
+      );
+    } else {
+      fail(job, err);
+    }
+  });
+
   py.on("close", (code) => {
     if (code !== 0 && !resultPayload) {
       fail(job, new Error(`O processo de IA falhou com código ${code}`));

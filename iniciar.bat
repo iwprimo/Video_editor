@@ -7,7 +7,9 @@ where node >nul 2>nul
 if errorlevel 1 goto semnode
 
 if not exist node_modules (
-  echo Instalando dependencias do editor (Node.js) - so na primeira vez...
+  echo.
+  echo [1/2] Instalando dependencias do editor (Node.js)...
+  echo Isso so acontece na primeira vez e pode levar 1 a 2 minutos.
   call npm install
   if errorlevel 1 goto erro
 )
@@ -15,14 +17,21 @@ if not exist node_modules (
 where python >nul 2>nul
 if not errorlevel 1 (
   if exist requirements.txt (
+    echo [2/2] Verificando dependencias de IA (Python)...
     call pip install -r requirements.txt -q --disable-pip-version-check 2>nul
   )
+) else (
+  echo [Aviso] Python nao detectado no PATH. O editor funcionara normalmente,
+  echo mas para usar o Recorte com IA instale o Python em https://python.org.
 )
 
 :rodar
 echo.
-echo Abrindo o editor em http://localhost:5173
-echo Para encerrar, feche esta janela.
+echo ========================================================
+echo   Editor de Video pronto!
+echo   Abrindo no navegador: http://localhost:5173
+echo   Para encerrar o editor, feche esta janela.
+echo ========================================================
 echo.
 call npm run dev
 goto fim
