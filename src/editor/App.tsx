@@ -47,7 +47,7 @@ import { HighlightsModal, Highlight } from "./HighlightsModal";
 import { SocialCopyModal } from "./SocialCopyModal";
 import { CoverModal } from "./CoverModal";
 import { applyOps, AiOp } from "./ops";
-import { imageSize, pollJob, postJson, uploadFile } from "./api";
+import { imageSize, lookupMedia, pollJob, postJson, uploadFile } from "./api";
 
 const STORAGE_KEY = "editor-video:projeto";
 
@@ -515,11 +515,14 @@ export const App: React.FC = () => {
     try {
       for (const [i, f] of files.entries()) {
         setUploading(`Enviando B-Roll ${i + 1} de ${files.length}…`);
-        const r = await uploadFile<{ kind: string; jobId?: string; file?: string; name?: string }>(f);
-        if (r.kind === "video" && r.jobId) {
-          const info = await pollJob<{ file: string; name: string; duration: number; width: number; height: number }>(r.jobId, (j) =>
-            setUploading(`Processando B-Roll: ${j.stage} (${Math.round(j.progress * 100)}%)`),
-          );
+        const known = await lookupMedia<{ file: string; name: string; duration: number; width: number; height: number }>(f);
+        const r = known ? null : await uploadFile<{ kind: string; jobId?: string; file?: string; name?: string }>(f);
+        if (known || (r?.kind === "video" && r.jobId)) {
+          const info =
+            known ??
+            (await pollJob<{ file: string; name: string; duration: number; width: number; height: number }>(r!.jobId!, (j) =>
+              setUploading(`Processando B-Roll: ${j.stage} (${Math.round(j.progress * 100)}%)`),
+            ));
           added.push({
             id: uid(),
             file: info.file,
@@ -584,20 +587,25 @@ export const App: React.FC = () => {
 
   // ---------- Vídeo gravado ----------
   const importVideo = async (file: File) => {
-    setImporting({ stage: "Enviando o vídeo", progress: 0 });
+    setImporting({ stage: "Verificando o vídeo", progress: 0 });
     try {
-      const r = await uploadFile<{ kind: string; jobId?: string; file?: string; name?: string }>(file, (p) =>
-        setImporting({ stage: "Enviando o vídeo", progress: p }),
-      );
-      if (r.kind === "image" && r.file) {
-        const size = await imageSize(`/media/${r.file}`);
-        history.set((p) => ({ ...p, assets: [...(p.assets ?? []), { id: uid(), file: r.file!, name: r.name ?? "imagem", ...size }] }));
-        flash("Imagem adicionada à biblioteca");
-        return;
+      // Mesmo arquivo já importado antes: reaproveita sem reenviar nem guardar outra cópia
+      let info = await lookupMedia<{ file: string; name: string; duration: number; width: number; height: number; reused?: boolean }>(file);
+      if (!info) {
+        setImporting({ stage: "Enviando o vídeo", progress: 0 });
+        const r = await uploadFile<{ kind: string; jobId?: string; file?: string; name?: string }>(file, (p) =>
+          setImporting({ stage: "Enviando o vídeo", progress: p }),
+        );
+        if (r.kind === "image" && r.file) {
+          const size = await imageSize(`/media/${r.file}`);
+          history.set((p) => ({ ...p, assets: [...(p.assets ?? []), { id: uid(), file: r.file!, name: r.name ?? "imagem", ...size }] }));
+          flash("Imagem adicionada à biblioteca");
+          return;
+        }
+        info = await pollJob<{ file: string; name: string; duration: number; width: number; height: number; reused?: boolean }>(r.jobId!, (j) =>
+          setImporting({ stage: j.stage, progress: j.progress }),
+        );
       }
-      const info = await pollJob<{ file: string; name: string; duration: number; width: number; height: number }>(r.jobId!, (j) =>
-        setImporting({ stage: j.stage, progress: j.progress }),
-      );
       const segments = [{ start: 0, end: info.duration }];
       const vs: VideoScene = {
         id: uid(),
@@ -621,7 +629,11 @@ export const App: React.FC = () => {
       history.set(next);
       selectScene(vs.id);
       requestAnimationFrame(() => seek(startOf(next, vs.id)));
-      flash("Vídeo importado. Agora você pode transcrever, cortar pausas e inserir ilustrações.");
+      flash(
+        info.reused
+          ? "Esse vídeo já estava importado: reaproveitei o mesmo arquivo, sem ocupar mais espaço."
+          : "Vídeo importado. Agora você pode transcrever, cortar pausas e inserir ilustrações.",
+      );
     } catch (e) {
       flash(e instanceof Error ? e.message : String(e));
     } finally {
@@ -1179,7 +1191,7 @@ export const App: React.FC = () => {
         canSplit={canSplit}
       />
 
-      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} onSaved={setConfig} />
+      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} onSaved={setConfig} project={project} />
 
       <ExportModal
         open={exportModalOpen}

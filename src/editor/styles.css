@@ -1176,3 +1176,26 @@ body.resizing-y, body.resizing-y * { cursor: row-resize !important; user-select:
 }
 
 
+
+/* ---------- Armazenamento da mídia ---------- */
+.media-clean { display: flex; flex-direction: column; gap: var(--space-3); }
+.mc-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); font-size: 13px; color: var(--muted); }
+.mc-summary b { color: var(--ink); font-weight: 600; }
+.mc-summary .link { margin-left: auto; }
+.mc-group { display: flex; flex-direction: column; gap: 6px; padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.mc-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.mc-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.mc-size { font-size: 12px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mc-list { list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; }
+.mc-item {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: var(--space-2);
+  padding: 6px 0; font-size: 12px; cursor: pointer;
+}
+.mc-item input { width: 15px; height: 15px; accent-color: var(--accent); }
+.mc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.mc-name em { font-style: normal; color: var(--faint); }
+.mc-fsize { color: var(--muted); font-variant-numeric: tabular-nums; }
+.btn.danger-solid { background: rgba(229, 123, 132, 0.14); border-color: rgba(229, 123, 132, 0.5); color: var(--danger); font-weight: 600; }
+.btn.danger-solid:hover:not(:disabled) { background: rgba(229, 123, 132, 0.22); border-color: var(--danger); }
+.form-ok-inline { font-size: 12px; color: var(--t-stats); }
+.form-error-inline { font-size: 12px; color: var(--danger); }

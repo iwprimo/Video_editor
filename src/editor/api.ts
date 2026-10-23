@@ -22,6 +22,17 @@ const netErr = () => {
   throw new ApiError("O servidor do editor não respondeu. Use o iniciar.bat ou npm run dev.");
 };
 
+// Vídeo já importado antes (mesmo nome e tamanho)? Devolve o resultado da importação, sem reenviar
+export const lookupMedia = async <T>(file: File): Promise<T | null> => {
+  if (!/^video\//.test(file.type) && !/\.(mp4|mov|m4v|mkv|webm|avi)$/i.test(file.name)) return null;
+  try {
+    const r = await postJson<{ found: boolean; result?: T }>("/api/media/lookup", { name: file.name, size: file.size });
+    return r.found && r.result ? r.result : null;
+  } catch {
+    return null;
+  }
+};
+
 // Envio com progresso (fetch não informa progresso de upload)
 export const uploadFile = <T>(file: File, onProgress?: (p: number) => void): Promise<T> =>
   new Promise((resolve, reject) => {

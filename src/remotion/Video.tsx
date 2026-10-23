@@ -19,6 +19,8 @@ import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
 import "@fontsource/inter/800.css";
 import "@fontsource/inter/900.css";
+// Montserrat e Bebas Neue embutidas: a prévia e o MP4 usam o mesmo arquivo de fonte
+import "./fonts/fonts.css";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { EffectsLayer, makePresentation } from "./effects";
 import { CaptionsLayer, OverlaysLayer } from "./overlays";
@@ -583,13 +585,16 @@ const SceneView: React.FC<{ scene: Scene; theme: Theme; assets?: ImageAsset[] }>
   }
 };
 
-// Garante que a Inter carregou antes de capturar os quadros
+// Garante que as fontes do vídeo carregaram antes de capturar os quadros
+const FONT_FACES = [
+  ...[400, 500, 600, 700, 800, 900].map((w) => `${w} 64px Inter`),
+  ...[600, 700, 800, 900].map((w) => `${w} 64px Montserrat`),
+  "400 64px 'Bebas Neue'",
+];
 const useFonts = () => {
   const [handle] = useState(() => delayRender("Carregando fontes"));
   useEffect(() => {
-    Promise.all(
-      [400, 500, 600, 700, 800].map((w) => document.fonts.load(`${w} 64px Inter`)),
-    )
+    Promise.all(FONT_FACES.map((f) => document.fonts.load(f)))
       .catch(() => undefined)
       .finally(() => continueRender(handle));
   }, [handle]);

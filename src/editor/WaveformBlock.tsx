@@ -24,9 +24,7 @@ export const WaveformBlock: React.FC<Props> = ({
 
   useEffect(() => {
     let cancelled = false;
-    const url = `${mediaBase}/media/${scene.file}`;
-
-    fetchAudioWaveform(url).then((decodedPeaks) => {
+    fetchAudioWaveform(scene.file, mediaBase).then((decodedPeaks) => {
       if (cancelled) return;
       if (decodedPeaks.length > 0) {
         setPeaks(decodedPeaks);

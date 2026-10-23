@@ -9,51 +9,36 @@ const pendingFetches = new Map<string, Promise<Float32Array>>();
 const SAMPLES_PER_SEC = 50;
 
 /**
- * Decodifica o arquivo de áudio via Web Audio API e devolve um Float32Array
- * contendo picos normalizados (0..1) a 50 amostras por segundo.
+ * Busca os picos de áudio calculados pelo servidor (ffmpeg lê só o áudio, em baixa resolução).
+ * Antes o navegador baixava o vídeo inteiro para decodificar, o que travava com arquivos de vários GB.
+ * Devolve um Float32Array com picos normalizados (0..1) a 50 amostras por segundo.
  */
-export const fetchAudioWaveform = async (url: string): Promise<Float32Array> => {
-  if (waveformCache.has(url)) return waveformCache.get(url)!;
-  if (pendingFetches.has(url)) return pendingFetches.get(url)!;
+export const fetchAudioWaveform = async (file: string, apiBase = ""): Promise<Float32Array> => {
+  const key = `${apiBase}|${file}`;
+  if (waveformCache.has(key)) return waveformCache.get(key)!;
+  if (pendingFetches.has(key)) return pendingFetches.get(key)!;
 
   const promise = (async () => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(`${apiBase}/api/waveform?file=${encodeURIComponent(file)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arrayBuffer = await res.arrayBuffer();
-
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      audioCtx.close().catch(() => {});
-
-      const raw = audioBuffer.getChannelData(0);
-      const totalSamples = Math.ceil(audioBuffer.duration * SAMPLES_PER_SEC);
-      const blockSize = Math.max(1, Math.floor(raw.length / totalSamples));
-      const peaks = new Float32Array(totalSamples);
-
-      for (let i = 0; i < totalSamples; i++) {
-        const start = i * blockSize;
-        const end = Math.min(raw.length, start + blockSize);
-        let max = 0;
-        for (let j = start; j < end; j += 4) {
-          const v = Math.abs(raw[j]);
-          if (v > max) max = v;
-        }
-        peaks[i] = Math.min(1, max);
-      }
-
-      waveformCache.set(url, peaks);
+      const data = (await res.json()) as { sps?: number; peaks?: number[] };
+      const src = data.peaks ?? [];
+      const ratio = (data.sps || SAMPLES_PER_SEC) / SAMPLES_PER_SEC;
+      const n = Math.floor(src.length / ratio);
+      const peaks = new Float32Array(n);
+      for (let i = 0; i < n; i++) peaks[i] = Math.min(1, (src[Math.floor(i * ratio)] ?? 0) / 255);
+      waveformCache.set(key, peaks);
       return peaks;
     } catch (err) {
-      console.warn("[Waveform] Falha ao decodificar áudio para waveform:", err);
+      console.warn("[Waveform] Forma de onda indisponível, usando o desenho pela fala:", err);
       return new Float32Array(0);
     } finally {
-      pendingFetches.delete(url);
+      pendingFetches.delete(key);
     }
   })();
 
-  pendingFetches.set(url, promise);
+  pendingFetches.set(key, promise);
   return promise;
 };
 

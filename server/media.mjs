@@ -97,6 +97,50 @@ export const extractWav = async (input, output) => {
   await run("ffmpeg", ["-y", "-i", input, "-vn", "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", output]);
 };
 
+// Picos de áudio para desenhar a forma de onda na linha do tempo.
+// Lê só o áudio, em mono e 4 kHz, então mesmo um vídeo de vários GB vira poucos MB no processo.
+// Devolve 50 valores por segundo, de 0 a 255, e guarda o resultado em cache ao lado da mídia.
+export const WAVE_SPS = 50;
+const WAVE_RATE = 4000;
+export const waveformPeaks = async (input, cacheFile) => {
+  try {
+    const st = fs.statSync(input);
+    const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+    if (cached.size === st.size && cached.mtimeMs === st.mtimeMs && Array.isArray(cached.peaks)) return cached;
+  } catch {
+    /* sem cache válido */
+  }
+  const tmp = path.join(path.dirname(cacheFile), `.${path.basename(cacheFile)}.${process.pid}.wav`);
+  fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+  try {
+    // O ffmpeg do Remotion é enxuto: grava WAV (como na transcrição), e os dados começam no bloco "data"
+    await run("ffmpeg", ["-y", "-v", "error", "-i", input, "-vn", "-ac", "1", "-ar", String(WAVE_RATE), "-c:a", "pcm_s16le", tmp]);
+    const file = fs.readFileSync(tmp);
+    let off = 12;
+    while (off + 8 <= file.length && file.toString("ascii", off, off + 4) !== "data") off += 8 + file.readUInt32LE(off + 4);
+    const buf = off + 8 <= file.length ? file.subarray(off + 8) : Buffer.alloc(0);
+    const samples = Math.floor(buf.length / 2);
+    const per = WAVE_RATE / WAVE_SPS;
+    const n = Math.ceil(samples / per);
+    const peaks = new Array(n);
+    for (let i = 0; i < n; i++) {
+      let max = 0;
+      const end = Math.min(samples, (i + 1) * per);
+      for (let j = i * per; j < end; j++) {
+        const v = Math.abs(buf.readInt16LE(j * 2));
+        if (v > max) max = v;
+      }
+      peaks[i] = Math.min(255, Math.round((max / 32768) * 255));
+    }
+    const st = fs.statSync(input);
+    const out = { sps: WAVE_SPS, size: st.size, mtimeMs: st.mtimeMs, peaks };
+    fs.writeFileSync(cacheFile, JSON.stringify(out));
+    return out;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+};
+
 // Detecta silêncios e devolve os intervalos a cortar (já com a margem aplicada)
 export const detectSilences = async (input, { threshold = -35, minSilence = 0.6, padding = 0.15 } = {}) => {
   let stderr = "";

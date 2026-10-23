@@ -9,23 +9,34 @@ import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition, ensureBrowser } from "@remotion/renderer";
 import { createConfig } from "./config.mjs";
-import { probe, needsTranscode, transcode, detectSilences, safeName } from "./media.mjs";
+import { probe, needsTranscode, transcode, detectSilences, safeName, waveformPeaks } from "./media.mjs";
 import { transcribeFile } from "./whisper.mjs";
 import { runPrompt, generateImage, verifyAnthropicKey, fixTranscript, extractHighlights, generateSocialCopy, suggestBrolls } from "./ai.mjs";
 import { claudeCodeStatus } from "./claudecode.mjs";
+import { createLibrary } from "./library.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// Lê o .env da pasta do editor, se existir (PORT, HOST, chaves, REMOTION_BROWSER_EXECUTABLE)
+try {
+  process.loadEnvFile(path.join(root, ".env"));
+} catch {
+  /* sem .env: valem as Configurações do editor */
+}
 const outDir = path.join(root, "exportados");
 const mediaDir = path.join(root, "midia");
 const originalsDir = path.join(mediaDir, "originais");
 const entry = path.join(root, "src", "remotion", "index.ts");
 const PORT = Number(process.env.PORT ?? 3123);
-const MEDIA_BASE = `http://localhost:${PORT}`;
+// Só aceita conexões deste computador: na rede da empresa ninguém mais usa a sua assinatura do Claude,
+// envia arquivos ou dispara tarefas. Para liberar de propósito, defina HOST=0.0.0.0 no .env.
+const HOST = process.env.HOST || "127.0.0.1";
+const MEDIA_BASE = `http://127.0.0.1:${PORT}`;
 const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || null;
 
 for (const d of [outDir, mediaDir, originalsDir]) fs.mkdirSync(d, { recursive: true });
 
 const config = createConfig(root);
+const library = createLibrary({ mediaDir, originalsDir });
 const app = express();
 app.use(express.json({ limit: "25mb" }));
 app.use("/media", express.static(mediaDir, { acceptRanges: true, maxAge: "1h" }));
@@ -126,6 +137,15 @@ app.post("/api/media", upload.single("file"), async (req, res) => {
 
   const [id, job] = newJob("Analisando o vídeo");
   res.json({ kind: "video", jobId: id });
+
+  // Mesmo vídeo já importado antes (mesmo nome e tamanho): reaproveita, sem guardar outra cópia
+  const again = library.lookup(req.file.originalname, req.file.size);
+  if (again) {
+    fs.rmSync(original, { force: true });
+    Object.assign(job, { status: "done", progress: 1, stage: "Já estava importado", result: { ...again, name: req.file.originalname, reused: true } });
+    return;
+  }
+
   try {
     const info = await probe(original);
     if (!info.videoCodec) throw new Error("O arquivo não tem uma faixa de vídeo reconhecível.");
@@ -136,26 +156,72 @@ app.post("/api/media", upload.single("file"), async (req, res) => {
       await transcode(original, path.join(mediaDir, file), info.duration, (p) => {
         job.progress = p;
       });
+      // O original enviado é uma cópia do arquivo que continua no seu computador: não precisa ficar aqui
+      fs.rmSync(original, { force: true });
     } else {
+      // Já está num formato compatível: move em vez de copiar (antes ficavam duas cópias iguais)
       file = path.basename(original).replace(/\.mov$/i, ".mp4");
-      fs.copyFileSync(original, path.join(mediaDir, file));
+      fs.renameSync(original, path.join(mediaDir, file));
     }
     const final = await probe(path.join(mediaDir, file));
-    Object.assign(job, {
-      status: "done",
-      progress: 1,
-      stage: "Pronto",
-      result: {
-        file,
-        name: req.file.originalname,
-        duration: final.duration,
-        width: final.width,
-        height: final.height,
-        hasAudio: final.hasAudio,
-      },
-    });
+    const result = {
+      file,
+      name: req.file.originalname,
+      duration: final.duration,
+      width: final.width,
+      height: final.height,
+      hasAudio: final.hasAudio,
+    };
+    library.remember(req.file.originalname, req.file.size, result);
+    Object.assign(job, { status: "done", progress: 1, stage: "Pronto", result });
   } catch (e) {
+    fs.rmSync(original, { force: true });
     fail(job, e);
+  }
+});
+
+// Antes de enviar um vídeo: se o mesmo arquivo já foi importado, o editor reaproveita sem reenviar
+app.post("/api/media/lookup", (req, res) => {
+  const hit = library.lookup(req.body?.name, req.body?.size);
+  res.json(hit ? { found: true, result: { ...hit, name: req.body?.name, reused: true } } : { found: false });
+});
+
+// Espaço usado pela mídia, separado entre o que o projeto aberto usa e o que dá para apagar
+app.post("/api/media/scan", (req, res) => {
+  try {
+    res.json(library.scan(JSON.stringify(req.body?.project ?? {})));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/media/delete", (req, res) => {
+  try {
+    res.json(library.remove(req.body?.files));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------- Forma de onda ----------
+
+// Um cálculo por arquivo por vez; pedidos repetidos esperam o mesmo resultado
+const waveJobs = new Map();
+app.get("/api/waveform", async (req, res) => {
+  try {
+    const input = mediaPath(req.query.file);
+    const cacheFile = path.join(mediaDir, ".waveform", `${path.basename(input)}.json`);
+    if (!waveJobs.has(input)) {
+      waveJobs.set(
+        input,
+        waveformPeaks(input, cacheFile).finally(() => waveJobs.delete(input)),
+      );
+    }
+    const data = await waveJobs.get(input);
+    res.set("Cache-Control", "no-cache");
+    res.json({ sps: data.sps, peaks: data.peaks });
+  } catch (e) {
+    res.status(e.status ?? 500).json({ error: e.message });
   }
 });
 
@@ -452,15 +518,13 @@ app.post("/api/pexels/download", async (req, res) => {
 
     const safe = safeName(name || `pexels-${id || Date.now()}`).slice(0, 30);
     const originalFile = `${Date.now().toString(36)}-pexels-${safe}.mp4`;
-    const targetOriginal = path.join(originalsDir, originalFile);
     const targetMedia = path.join(mediaDir, originalFile);
 
     const streamRes = await fetch(videoUrl);
     if (!streamRes.ok) throw new Error(`Falha ao transferir vídeo do Pexels (${streamRes.status})`);
     const arrayBuffer = await streamRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    fs.writeFileSync(targetOriginal, buffer);
-    fs.copyFileSync(targetOriginal, targetMedia);
+    // Uma cópia só, direto na pasta de mídia
+    fs.writeFileSync(targetMedia, Buffer.from(arrayBuffer));
 
     let info = { duration: 10, width: 1080, height: 1920 };
     try {
@@ -551,10 +615,27 @@ const stamp = () => {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 };
 
+// O download do navegador de renderização pode falhar fora do alcance do try/catch
+// (erro de rede dentro da biblioteca). Guarda a tarefa em andamento para marcá-la com erro.
+let browserJob = null;
+const BROWSER_HELP =
+  "Não foi possível baixar o navegador que o Remotion usa para exportar (sem internet ou endereço bloqueado na rede). Tente em outra rede uma vez; depois ele fica salvo no PC. Outra opção: aponte REMOTION_BROWSER_EXECUTABLE no .env para um Chrome Headless Shell já baixado.";
+const isNetworkError = (e) => /ENOTFOUND|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|getaddrinfo|fetch failed|socket hang up/i.test(String(e?.code ?? "") + " " + String(e?.message ?? e));
+
 const runRender = async (job, project, options = {}) => {
   try {
     job.stage = "Preparando navegador";
-    if (!browserExecutable) await ensureBrowser();
+    if (!browserExecutable) {
+      browserJob = job;
+      try {
+        await ensureBrowser();
+      } catch (e) {
+        throw isNetworkError(e) ? new Error(BROWSER_HELP) : e;
+      } finally {
+        browserJob = null;
+      }
+      if (job.status === "error") return;
+    }
     job.stage = "Empacotando";
     const serveUrl = await getBundle();
     // O renderizador acessa os vídeos e imagens pelo servidor local
@@ -616,8 +697,19 @@ app.get("/api/download/:id", (req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-app.listen(PORT, () => {
-  console.log(`Servidor do editor em http://localhost:${PORT}`);
+// Um erro solto (rede, biblioteca) vira mensagem no terminal e na tarefa, em vez de derrubar o servidor
+const onStray = (kind) => (e) => {
+  console.error(`[${kind}]`, e?.stack || e);
+  if (browserJob && browserJob.status === "running") {
+    fail(browserJob, isNetworkError(e) ? new Error(BROWSER_HELP) : e);
+    browserJob = null;
+  }
+};
+process.on("unhandledRejection", onStray("erro não tratado"));
+process.on("uncaughtException", onStray("exceção não tratada"));
+
+app.listen(PORT, HOST, () => {
+  console.log(`Servidor do editor em http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   console.log(`  exportados: ${outDir}`);
   console.log(`  mídia:      ${mediaDir}`);
   getBundle().catch((e) => console.error("Falha ao empacotar:", e.message));

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import type { Project } from "../remotion/types";
+import { MediaCleanup } from "./MediaCleanup";
 import { getJson, postJson } from "./api";
 
 export type PublicConfig = {
@@ -38,7 +40,7 @@ type CCStatus = {
   message: string;
 };
 
-type Props = { open: boolean; onClose: () => void; onSaved: (c: PublicConfig) => void };
+type Props = { open: boolean; onClose: () => void; onSaved: (c: PublicConfig) => void; project?: Project };
 
 export const loadConfig = () => getJson<PublicConfig>("/api/config");
 
@@ -63,7 +65,7 @@ const KeyStatus: React.FC<{ has: boolean; masked: string; problem?: string | nul
   );
 };
 
-export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
+export const Settings: React.FC<Props> = ({ open, onClose, onSaved, project }) => {
   const [cfg, setCfg] = useState<PublicConfig | null>(null);
   const [anthropicKey, setAnthropicKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
@@ -407,6 +409,13 @@ export const Settings: React.FC<Props> = ({ open, onClose, onSaved }) => {
                 </span>
               </label>
             </section>
+
+            {project ? (
+              <section>
+                <h3>Armazenamento da mídia</h3>
+                <MediaCleanup project={project} />
+              </section>
+            ) : null}
           </div>
         )}
         <div className="modal-foot">
